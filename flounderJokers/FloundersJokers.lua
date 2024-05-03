@@ -1733,24 +1733,6 @@ function SMODS.INIT.flounderjokers()
     end
 end
 
-
--- Calculate Chips
-local evaluate_playref = G.FUNCS.evaluate_play
-function G.FUNCS.evaluate_play(self, e)
-    evaluate_playref(self, e)
-
-    for i = 1, #G.jokers.cards do
-        local effects = eval_card(G.jokers.cards[i], {
-            card = G.consumeables,
-            after = true,
-            mmc_scored_chips = hand_chips * mult
-        })
-        if effects.jokers then
-            card_eval_status_text(G.jokers.cards[i], 'jokers', nil, 0.3, nil, effects.jokers)
-        end
-    end
-end
-
 function Tag:init(_tag, for_collection, _blind_type)
     self.key = _tag
     local proto = G.P_TAGS[_tag] or G.tag_undiscovered

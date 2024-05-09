@@ -3,7 +3,7 @@
 --- MOD_ID: flounderjokers
 --- MOD_AUTHOR: [Flounder]
 --- MOD_DESCRIPTION: adds 4 jokers with effects: rerolls have chance to add jokers of higher rarity 
-
+--- BADGE_COLOUR: b43254
 ----------------------------------------------
 ------------MOD CODE -------------------------
 
@@ -18,33 +18,45 @@ local config = {
 	shinyStone = true,
 	crystalizedStone = true,
 	luxuryStone = true,
+	moonStone = true,
+	sunStone = true,
 	spearHead = true,
 	bulletTip = true,
 	missileTip = true,
 	crystalMagazine = true,
 	sunGun = true,
+	spaceLaser = true,
+	solarFlare = true,
 	bloodGem = true,
 	lostGem = true,
 	sunkenGem = true,
 	loveGem = true,
 	holyGem = true,
+	radiationGem = true,
+	apolloGem = true,
 	imperialTopaz = true,
 	mozambiqueRuby = true,
 	pinkPanther = true,
 	blackDiamond = true,
 	goldBar = true,
+	meteorPiece = true,
+	starPlasma = true,
 	gunsandRoses = true,
 	fishandChips = true,
 	saltandPepper = true,
 	macaroniandCheese = true,
 	breadandButter = true,
 	rhythmandBlues = true,
+	moonandSun = true,
+	sunandMoon = true,
 	kingsWrath = true,
 	theBurglar = true,
 	hungrySorcerer = true,
 	glassBlower = true,
 	enchancedSediment = true,
 	bornWild = true,
+	mathMatician = true,
+	theBoss = true,
 	overtheRainbow = true,
 	
 }
@@ -2149,6 +2161,7 @@ function SMODS.INIT.flounderjokers()
             end
 	    end
 	end
+	
     ----- MusicSuit collab !!!!! -----------------
 	----------------------------------------------
 	
@@ -2978,6 +2991,846 @@ function SMODS.INIT.flounderjokers()
                         for k, v in ipairs(context.full_hand) do
                             if v:is_suit("Crowns") then 
                                 v:set_ability(G.P_CENTERS.m_gold, nil, true)
+                                G.E_MANAGER:add_event(Event({
+                                    func = function()
+                                        v:juice_up()
+                                        return true
+                                    end
+						        }))        
+                            end
+                        end
+	                end
+		        end
+	        end
+        end
+    end
+
+----- SixSuit collab !!!!! -------------------
+----------------------------------------------
+
+    if SMODS.INIT.SixSuit and config.moonStone then
+	
+	    -- Create Moon Stone
+        local most = {
+            loc = {
+                name = "Moon Stone",
+                text = {
+                    "{C:green}#2# in #1#{} chance for",
+                    "played cards with {C:moons}Moon{} suit",
+					"to give {X:mult,C:white}X#3#{} mult when scored"
+                }
+            },
+            ability_name = "moonStone",
+            slug = "moonst",
+            ability = {
+                extra = {odds = 2, Xmult = 1.5}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Moon Stone
+        local joker_most = SMODS.Joker:new(
+            most.ability_name,
+            most.slug,
+            most.ability,
+            { x = 0, y = 0 },
+            most.loc,
+            most.rarity,
+            most.cost,
+            most.unlocked,
+            most.discovered,
+            most.blueprint_compat,
+            most.eternal_compat
+        )
+        joker_most:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_most = SMODS.Sprite:new(
+            "j_" .. most.slug,
+            flounderJokers.path,
+            "j_" .. most.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_most:register()
+
+        -- Set local variables for Moon Stone
+        function SMODS.Jokers.j_moonst.loc_def(self)
+            return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.Xmult}
+        end
+        -- Calculate
+        SMODS.Jokers.j_moonst.calculate = function(self, context)
+	       if self.ability.name ==  'moonStone' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then 
+                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        return {
+                            x_mult = self.ability.extra.Xmult,
+                            card = self
+                        }
+                    end
+                end
+	        end
+		end
+	end
+    if SMODS.INIT.SixSuit and config.spaceLaser then
+        -- Create Space Laser
+        local spla = {
+            loc = {
+                name = "Space Laser",
+                text = {
+                    "Played cards with",
+                    "{C:moons}Moon{} suit give",
+					"{C:chips}+#1#{} Chips when scored"
+                }
+            },
+            ability_name = "spaceLaser",
+            slug = "spacel",
+            ability = {
+                extra = {chips = 50}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Space Laser
+        local joker_spla = SMODS.Joker:new(
+            spla.ability_name,
+            spla.slug,
+            spla.ability,
+            { x = 0, y = 0 },
+            spla.loc,
+            spla.rarity,
+            spla.cost,
+            spla.unlocked,
+            spla.discovered,
+            spla.blueprint_compat,
+            spla.eternal_compat
+        )
+        joker_spla:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_spla = SMODS.Sprite:new(
+            "j_" .. spla.slug,
+            flounderJokers.path,
+            "j_" .. spla.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_spla:register()
+
+        -- Set local variables for Space Laser
+        function SMODS.Jokers.j_spacel.loc_def(self)
+            return { self.ability.extra.chips}
+        end
+		-- Calculate
+        SMODS.Jokers.j_spacel.calculate = function(self, context)
+	       if self.ability.name ==  'spaceLaser' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then 
+                    return {
+                        chips = self.ability.extra.chips,
+                        card = self
+                    }		
+				end
+			end
+		end
+	end
+    if SMODS.INIT.SixSuit and config.apolloGem then
+	    -- Create Apollo Gem
+        local apge = {
+            loc = {
+                name = "Apollo Gem",
+                text = {
+                    "Played cards with",
+                    "{C:moons}Moon{} suit give",
+					"{C:money}$#1#{} when scored"
+                }
+            },
+            ability_name = "apolloGem",
+            slug = "apollog",
+            ability = {
+                extra = {money = 1}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Apollo Gem
+        local joker_apge = SMODS.Joker:new(
+            apge.ability_name,
+            apge.slug,
+            apge.ability,
+            { x = 0, y = 0 },
+            apge.loc,
+            apge.rarity,
+            apge.cost,
+            apge.unlocked,
+            apge.discovered,
+            apge.blueprint_compat,
+            apge.eternal_compat
+        )
+        joker_apge:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_apge = SMODS.Sprite:new(
+            "j_" .. apge.slug,
+            flounderJokers.path,
+            "j_" .. apge.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_apge:register()
+
+        -- Set local variables for Apollo Gem
+        function SMODS.Jokers.j_apollog.loc_def(self)
+            return { self.ability.extra.money}
+        end
+		-- Calculate
+        SMODS.Jokers.j_apollog.calculate = function(self, context)
+	       if self.ability.name ==  'apolloGem' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then
+                    G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.extra.money
+					G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
+                    return {
+                        dollars = self.ability.extra.money,
+                        card = self
+                    }		
+				end
+			end
+		end
+	end
+    if SMODS.INIT.SixSuit and config.meteorPiece then
+        -- Create Meteor Piece
+        local mepi = {
+            loc = {
+                name = "Meteor Piece",
+                text = {
+                    "Played cards with",
+                    "{C:moons}Moon{} suit give",
+					"{C:mult}+#1#{} Mult when scored"
+                }
+            },
+            ability_name = "meteorPiece",
+            slug = "meteorpi",
+            ability = {
+                extra = {mult = 7}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Meteor Piece
+        local joker_mepi = SMODS.Joker:new(
+            mepi.ability_name,
+            mepi.slug,
+            mepi.ability,
+            { x = 0, y = 0 },
+            mepi.loc,
+            mepi.rarity,
+            mepi.cost,
+            mepi.unlocked,
+            mepi.discovered,
+            mepi.blueprint_compat,
+            mepi.eternal_compat
+        )
+        joker_mepi:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_mepi = SMODS.Sprite:new(
+            "j_" .. mepi.slug,
+            flounderJokers.path,
+            "j_" .. mepi.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_mepi:register()
+
+        -- Set local variables for Meteor Piece
+        function SMODS.Jokers.j_meteorpi.loc_def(self)
+            return { self.ability.extra.mult}
+        end
+		-- Calculate
+        SMODS.Jokers.j_meteorpi.calculate = function(self, context)
+	       if self.ability.name ==  'meteorPiece' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then
+                    return {
+                        mult = self.ability.extra.mult,
+                        card = self
+                    }		
+				end
+			end
+		end
+	end
+    if SMODS.INIT.SixSuit and config.moonandSun then
+        -- Create Moon and Sun
+        local mosu = {
+            loc = {
+                name = "Moon and Sun",
+                text = {
+                    "Retriggers all",
+					"played {C:moons}Moon{} cards"
+                }
+            },
+            ability_name = "moonandSun",
+            slug = "moonan",
+            ability = {
+                extra = {loop_amount = 1}
+            },
+            rarity = 3,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Moon and Sun
+        local joker_mosu = SMODS.Joker:new(
+            mosu.ability_name,
+            mosu.slug,
+            mosu.ability,
+            { x = 0, y = 0 },
+            mosu.loc,
+            mosu.rarity,
+            mosu.cost,
+            mosu.unlocked,
+            mosu.discovered,
+            mosu.blueprint_compat,
+            mosu.eternal_compat
+        )
+        joker_mosu:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_mosu = SMODS.Sprite:new(
+            "j_" .. mosu.slug,
+            flounderJokers.path,
+            "j_" .. mosu.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_mosu:register()
+
+        -- Set local variables for Moon and Sun
+        function SMODS.Jokers.j_moonan.loc_def(card)
+            return { card.ability.extra.loop_amount}
+        end
+		-- Calculate
+        SMODS.Jokers.j_moonan.calculate = function(self, context)
+	        if context.repetition and context.cardarea == G.play then
+                if context.other_card:is_suit("Moons") then
+                    return {
+                        message = localize('k_again_ex'),
+                        repetitions = 1,
+                        card = self
+                    }		
+			    end
+			end
+	    end
+    end
+    if SMODS.INIT.SixSuit and config.mathMatician then
+	
+	    -- Create Mathmatician
+        local mama = {
+            loc = {
+                name = "Mathmatician",
+                text = {
+                    "All {C:moons}Moon{} suit cards have",
+					"{C:green}#2# in #1#{} chance to",  
+                    "become {C:mult}Mult{} cards",
+                    "when played"
+                }
+            },
+            ability_name = "mathMatician",
+            slug = "mathma",
+            ability = {
+                extra = {odds = 10}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Mathmatician
+        local joker_mama = SMODS.Joker:new(
+            mama.ability_name,
+            mama.slug,
+            mama.ability,
+            { x = 0, y = 0 },
+            mama.loc,
+            mama.rarity,
+            mama.cost,
+            mama.unlocked,
+            mama.discovered,
+            mama.blueprint_compat,
+            mama.eternal_compat
+        )
+        joker_mama:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_mama = SMODS.Sprite:new(
+            "j_" .. mama.slug,
+            flounderJokers.path,
+            "j_" .. mama.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_mama:register()
+
+        -- Set local variables for Mathmatician
+        function SMODS.Jokers.j_mathma.loc_def(self)
+            return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
+        end
+        -- Calculate
+        SMODS.Jokers.j_mathma.calculate = function(self, context)
+	       if self.ability.name ==  'mathMatician' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then
+                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        for k, v in ipairs(context.full_hand) do
+                            if v:is_suit("Moons") then 
+                                v:set_ability(G.P_CENTERS.m_mult, nil, true)
+                                G.E_MANAGER:add_event(Event({
+                                    func = function()
+                                        v:juice_up()
+                                        return true
+                                    end
+						        }))        
+                            end
+                        end
+	                end
+		        end
+	        end
+        end
+    end
+     if SMODS.INIT.SixSuit and config.sunStone then
+	
+	    -- Create Sun Stone
+        local sust = {
+            loc = {
+                name = "Sun Stone",
+                text = {
+                    "{C:green}#2# in #1#{} chance for",
+                    "played cards with {C:stars}Star{} suit",
+					"to give {X:mult,C:white}X#3#{} mult when scored"
+                }
+            },
+            ability_name = "sunStone",
+            slug = "sunst",
+            ability = {
+                extra = {odds = 2, Xmult = 1.5}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Sun Stone
+        local joker_sust = SMODS.Joker:new(
+            sust.ability_name,
+            sust.slug,
+            sust.ability,
+            { x = 0, y = 0 },
+            sust.loc,
+            sust.rarity,
+            sust.cost,
+            sust.unlocked,
+            sust.discovered,
+            sust.blueprint_compat,
+            sust.eternal_compat
+        )
+        joker_sust:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_sust = SMODS.Sprite:new(
+            "j_" .. sust.slug,
+            flounderJokers.path,
+            "j_" .. sust.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_sust:register()
+
+        -- Set local variables for Sun Stone
+        function SMODS.Jokers.j_sunst.loc_def(self)
+            return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.Xmult}
+        end
+        -- Calculate
+        SMODS.Jokers.j_sunst.calculate = function(self, context)
+	       if self.ability.name ==  'sunStone' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Stars") then 
+                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        return {
+                            x_mult = self.ability.extra.Xmult,
+                            card = self
+                        }
+                    end
+                end
+	        end
+		end
+	end
+    if SMODS.INIT.SixSuit and config.solarFlare then
+        -- Create Solar Flare
+        local sofl = {
+            loc = {
+                name = "Solar Flare",
+                text = {
+                    "Played cards with",
+                    "{C:stars}Star{} suit give",
+					"{C:chips}+#1#{} Chips when scored"
+                }
+            },
+            ability_name = "solarFlare",
+            slug = "solarf",
+            ability = {
+                extra = {chips = 50}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Solar Flare
+        local joker_sofl = SMODS.Joker:new(
+            sofl.ability_name,
+            sofl.slug,
+            sofl.ability,
+            { x = 0, y = 0 },
+            sofl.loc,
+            sofl.rarity,
+            sofl.cost,
+            sofl.unlocked,
+            sofl.discovered,
+            sofl.blueprint_compat,
+            sofl.eternal_compat
+        )
+        joker_sofl:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_sofl = SMODS.Sprite:new(
+            "j_" .. sofl.slug,
+            flounderJokers.path,
+            "j_" .. sofl.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_sofl:register()
+
+        -- Set local variables for Solar Flare
+        function SMODS.Jokers.j_solarf.loc_def(self)
+            return { self.ability.extra.chips}
+        end
+		-- Calculate
+        SMODS.Jokers.j_solarf.calculate = function(self, context)
+	       if self.ability.name ==  'solarFlare' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Stars") then 
+                    return {
+                        chips = self.ability.extra.chips,
+                        card = self
+                    }		
+				end
+			end
+		end
+	end
+    if SMODS.INIT.SixSuit and config.radiationGem then
+	    -- Create Radiation Gem
+        local rage = {
+            loc = {
+                name = "Radiation Gem",
+                text = {
+                    "Played cards with",
+                    "{C:stars}Star{} suit give",
+					"{C:money}$#1#{} when scored"
+                }
+            },
+            ability_name = "radiationGem",
+            slug = "radge",
+            ability = {
+                extra = {money = 1}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Radiation Gem
+        local joker_rage = SMODS.Joker:new(
+            rage.ability_name,
+            rage.slug,
+            rage.ability,
+            { x = 0, y = 0 },
+            rage.loc,
+            rage.rarity,
+            rage.cost,
+            rage.unlocked,
+            rage.discovered,
+            rage.blueprint_compat,
+            rage.eternal_compat
+        )
+        joker_rage:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_rage = SMODS.Sprite:new(
+            "j_" .. rage.slug,
+            flounderJokers.path,
+            "j_" .. rage.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_rage:register()
+
+        -- Set local variables for Radiation Gem
+        function SMODS.Jokers.j_radge.loc_def(self)
+            return { self.ability.extra.money}
+        end
+		-- Calculate
+        SMODS.Jokers.j_radge.calculate = function(self, context)
+	       if self.ability.name ==  'radiationGem' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then
+                    G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.extra.money
+					G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
+                    return {
+                        dollars = self.ability.extra.money,
+                        card = self
+                    }		
+				end
+			end
+		end
+	end
+    if SMODS.INIT.SixSuit and config.starPlasma then
+        -- Create Star Plasma
+        local stpl = {
+            loc = {
+                name = "Star Plasma",
+                text = {
+                    "Played cards with",
+                    "{C:stars}Star{} suit give",
+					"{C:mult}+#1#{} Mult when scored"
+                }
+            },
+            ability_name = "starPlasma",
+            slug = "starpl",
+            ability = {
+                extra = {mult = 7}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Star Plasma
+        local joker_stpl = SMODS.Joker:new(
+            stpl.ability_name,
+            stpl.slug,
+            stpl.ability,
+            { x = 0, y = 0 },
+            stpl.loc,
+            stpl.rarity,
+            stpl.cost,
+            stpl.unlocked,
+            stpl.discovered,
+            stpl.blueprint_compat,
+            stpl.eternal_compat
+        )
+        joker_stpl:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_stpl = SMODS.Sprite:new(
+            "j_" .. stpl.slug,
+            flounderJokers.path,
+            "j_" .. stpl.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_stpl:register()
+
+        -- Set local variables for Star Plasma
+        function SMODS.Jokers.j_starpl.loc_def(self)
+            return { self.ability.extra.mult}
+        end
+		-- Calculate
+        SMODS.Jokers.j_starpl.calculate = function(self, context)
+	       if self.ability.name ==  'starPlasma' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Stars") then
+                    return {
+                        mult = self.ability.extra.mult,
+                        card = self
+                    }		
+				end
+			end
+		end
+	end
+    if SMODS.INIT.SixSuit and config.sunandMoon then
+        -- Create Sun and Moon
+        local sumo = {
+            loc = {
+                name = "Sun and Moon",
+                text = {
+                    "Retriggers all",
+					"played {C:stars}Star{} cards"
+                }
+            },
+            ability_name = "sunandMoon",
+            slug = "sunan",
+            ability = {
+                extra = {loop_amount = 1}
+            },
+            rarity = 3,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Sun and Moon
+        local joker_sumo = SMODS.Joker:new(
+            sumo.ability_name,
+            sumo.slug,
+            sumo.ability,
+            { x = 0, y = 0 },
+            sumo.loc,
+            sumo.rarity,
+            sumo.cost,
+            sumo.unlocked,
+            sumo.discovered,
+            sumo.blueprint_compat,
+            sumo.eternal_compat
+        )
+        joker_sumo:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_sumo = SMODS.Sprite:new(
+            "j_" .. sumo.slug,
+            flounderJokers.path,
+            "j_" .. sumo.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_sumo:register()
+
+        -- Set local variables for Sun and Moon
+        function SMODS.Jokers.j_sunan.loc_def(card)
+            return { card.ability.extra.loop_amount}
+        end
+		-- Calculate
+        SMODS.Jokers.j_sunan.calculate = function(self, context)
+	        if context.repetition and context.cardarea == G.play then
+                if context.other_card:is_suit("Stars") then
+                    return {
+                        message = localize('k_again_ex'),
+                        repetitions = 1,
+                        card = self
+                    }		
+			    end
+			end
+	    end
+    end
+    if SMODS.INIT.SixSuit and config.theBoss then
+	
+	    -- Create The Boss
+        local thbo = {
+            loc = {
+                name = "The Boss",
+                text = {
+                    "All {C:stars}Star{} suit cards have",
+					"{C:green}#2# in #1#{} chance to",  
+                    "become {C:chips}Bonus{} cards",
+                    "when played"
+                }
+            },
+            ability_name = "theBoss",
+            slug = "thebo",
+            ability = {
+                extra = {odds = 10}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize The Boss
+        local joker_thbo = SMODS.Joker:new(
+            thbo.ability_name,
+            thbo.slug,
+            thbo.ability,
+            { x = 0, y = 0 },
+            thbo.loc,
+            thbo.rarity,
+            thbo.cost,
+            thbo.unlocked,
+            thbo.discovered,
+            thbo.blueprint_compat,
+            thbo.eternal_compat
+        )
+        joker_thbo:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_thbo = SMODS.Sprite:new(
+            "j_" .. thbo.slug,
+            flounderJokers.path,
+            "j_" .. thbo.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_thbo:register()
+
+        -- Set local variables for The Boss
+        function SMODS.Jokers.j_thebo.loc_def(self)
+            return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
+        end
+        -- Calculate
+        SMODS.Jokers.j_thebo.calculate = function(self, context)
+	       if self.ability.name ==  'theBoss' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Stars") then
+                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        for k, v in ipairs(context.full_hand) do
+                            if v:is_suit("Stars") then 
+                                v:set_ability(G.P_CENTERS.m_bonus, nil, true)
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
                                         v:juice_up()

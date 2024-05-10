@@ -2945,7 +2945,7 @@ function SMODS.INIT.flounderjokers()
             ability = {
                 extra = {odds = 10}
             },
-            rarity = 2,
+            rarity = 3,
             cost = 6,
             unlocked = true,
             discovered = true,

@@ -50,7 +50,7 @@ local config = {
 	moonandSun = true,
 	sunandMoon = true,
 	kingsWrath = true,
-	theBurglar = true,
+	theRobber = true,
 	hungrySorcerer = true,
 	glassBlower = true,
 	enchancedSediment = true,
@@ -1777,11 +1777,11 @@ function SMODS.INIT.flounderjokers()
 			end
 	    end
     end
-    if config.theBurglar then
-	    -- Create The Burglar
-        local thbu = {
+    if config.theRobber then
+	    -- Create The Robber
+        local thro = {
             loc = {
-                name = "The Burglar",
+                name = "The Robber",
                 text = {
                     "All {C:spades}Spade{} suit cards have",
 					"{C:green}#2# in #1#{} chance to",
@@ -1789,8 +1789,8 @@ function SMODS.INIT.flounderjokers()
                     "when played"
                 }
             },
-            ability_name = "theBurglar",
-            slug = "burglar",
+            ability_name = "theRobber",
+            slug = "robberh",
             ability = {
                 extra = {odds = 10}
             },
@@ -1802,40 +1802,40 @@ function SMODS.INIT.flounderjokers()
             eternal_compat = true
         }
 
-        -- Initialize The Burglar
-        local joker_thbu = SMODS.Joker:new(
-            thbu.ability_name,
-            thbu.slug,
-            thbu.ability,
+        -- Initialize The Robber
+        local joker_thro = SMODS.Joker:new(
+            thro.ability_name,
+            thro.slug,
+            thro.ability,
             { x = 0, y = 0 },
-            thbu.loc,
-            thbu.rarity,
-            thbu.cost,
-            thbu.unlocked,
-            thbu.discovered,
-            thbu.blueprint_compat,
-            thbu.eternal_compat
+            thro.loc,
+            thro.rarity,
+            thro.cost,
+            thro.unlocked,
+            thro.discovered,
+            thro.blueprint_compat,
+            thro.eternal_compat
         )
-        joker_thbu:register()
+        joker_thro:register()
 
         -- Initialize Sprite for Jokers
-        local sprite_thbu = SMODS.Sprite:new(
-            "j_" .. thbu.slug,
+        local sprite_thro = SMODS.Sprite:new(
+            "j_" .. thro.slug,
             flounderJokers.path,
-            "j_" .. thbu.slug .. ".png",
+            "j_" .. thro.slug .. ".png",
             71,
             95,
             "asset_atli"
         )
-        sprite_thbu:register()
+        sprite_thro:register()
 
-        -- Set local variables for The Burglar
-        function SMODS.Jokers.j_burglar.loc_def(self)
+        -- Set local variables for The Robber
+        function SMODS.Jokers.j_robberh.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_burglar.calculate = function(self, context)
-	       if self.ability.name ==  'theBurglar' then
+        SMODS.Jokers.j_robberh.calculate = function(self, context)
+	       if self.ability.name ==  'theRobber' then
 		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Spades") then
                     if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
                         for k, v in ipairs(context.full_hand) do

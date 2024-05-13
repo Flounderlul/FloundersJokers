@@ -59,6 +59,10 @@ local config = {
 	theBoss = true,
 	overtheRainbow = true,
 	witchDoctor = true,
+	palmReader = true,
+	painTer = true,
+	diRector = true,
+	orbit = true,
 	
 }
 
@@ -2093,7 +2097,7 @@ function SMODS.INIT.flounderjokers()
                 text = {
                     "Played hands that contain {C:attention}Flush{} have",
 					"{C:green}#2# in #1#{} chance to",
-                    "become {C:dark_edition}Polychrome{} cards",
+                    "become {C:colourcard}Polychrome{} cards",
                     "when played"
                 }
             },
@@ -2162,8 +2166,433 @@ function SMODS.INIT.flounderjokers()
             end
 	    end
 	end
+    if SMODS.INIT.CodexArcanum and config.witchDoctor then
 	
-    ----- MusicSuit collab !!!!! -----------------
+	    -- Create Witch Doctor
+        local wido = {
+            loc = {
+                name = "Witch Doctor",
+                text = {
+                    "All {C:crowns}Crown{} suit cards have",
+					"{C:green}#2# in #1#{} chance to",  
+                    "Create an {C:alchemical}Alchemical{} card when played",
+                }
+            },
+            ability_name = "witchDoctor",
+            slug = "witchdo",
+            ability = {
+                extra = {odds = 10, used = false}
+            },
+            rarity = 2,
+            cost = 6,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Witch Doctor
+        local joker_wido = SMODS.Joker:new(
+            wido.ability_name,
+            wido.slug,
+            wido.ability,
+            { x = 0, y = 0 },
+            wido.loc,
+            wido.rarity,
+            wido.cost,
+            wido.unlocked,
+            wido.discovered,
+            wido.blueprint_compat,
+            wido.eternal_compat
+        )
+        joker_wido:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_wido = SMODS.Sprite:new(
+            "j_" .. wido.slug,
+            flounderJokers.path,
+            "j_" .. wido.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_wido:register()
+
+        -- Set local variables for Witch Doctor
+        function SMODS.Jokers.j_witchdo.loc_def(self)
+            return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.used}
+        end
+        -- Calculate
+        SMODS.Jokers.j_witchdo.calculate = function(self, context)
+	       if self.ability.name ==  'witchDoctor' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Crowns") then
+                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        self.ability.extra.used = false
+						if not context.blueprint and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                            add_random_alchemical(self)
+                            card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('p_plus_alchemical'), colour = G.C.SECONDARY_SET.Alchemy})
+                        end
+					end
+				end
+            end
+            if context.using_consumeable and not context.consumeable.config.in_booster then
+                if context.consumeable.ability.set == 'Alchemical' and self.ability.extra.used == false then
+                    G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                    G.E_MANAGER:add_event(Event({
+                        func = (function()
+                            G.E_MANAGER:add_event(Event({
+                                func = function() 
+                                    local card = create_card('Tarot',G.consumeables, nil, nil, nil, nil, nil, 'car')
+                                    card:set_edition({negative = true})
+                                    card:add_to_deck()
+                                    G.consumeables:emplace(card)
+                                    G.GAME.consumeable_buffer = 0
+                                    return true
+                                end}))   
+                                card_eval_status_text(context.blueprint_card or self, 'extra', nil, nil, nil, {message = localize('k_plus_tarot'), colour = G.C.PURPLE})                       
+                            return true
+                        end)}))
+                    self.ability.extra.used = true
+                end
+            end
+        end
+    end
+	if config.palmReader then
+	    -- Create Palm Reader
+        local pare = {
+            loc = {
+                name = "Palm Reader",
+                text = {
+                    "All {C:clubs}Club{} suit cards have",
+					"{C:green}#2# in #1#{} chance to",  
+                    "Create an {C:purple}Tarot{} card when played",
+                }
+            },
+            ability_name = "palmReader",
+            slug = "palmr",
+            ability = {
+                extra = {odds = 5}
+            },
+            rarity = 2,
+            cost = 12,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Palm Reader
+        local joker_pare = SMODS.Joker:new(
+            pare.ability_name,
+            pare.slug,
+            pare.ability,
+            { x = 0, y = 0 },
+            pare.loc,
+            pare.rarity,
+            pare.cost,
+            pare.unlocked,
+            pare.discovered,
+            pare.blueprint_compat,
+            pare.eternal_compat
+        )
+        joker_pare:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_pare = SMODS.Sprite:new(
+            "j_" .. pare.slug,
+            flounderJokers.path,
+            "j_" .. pare.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_pare:register()
+
+        -- Set local variables for Palm Reader
+        function SMODS.Jokers.j_palmr.loc_def(self)
+            return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
+        end
+        -- Calculate
+        SMODS.Jokers.j_palmr.calculate = function(self, context)
+	       if self.ability.name ==  'palmReader' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Clubs") then
+                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+					    if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                            G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                            G.E_MANAGER:add_event(Event({
+                                trigger = 'before',
+                                delay = 0.0,
+                                func = (function()
+                                        local card = create_card('Tarot',G.consumeables, nil, nil, nil, nil, nil, '8ba')
+                                        card:add_to_deck()
+                                        G.consumeables:emplace(card)
+                                        G.GAME.consumeable_buffer = 0
+                                    return true
+                                end)}))
+                            card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_tarot'), colour = G.C.PURPLE})
+                        end
+                        return {
+                            card = self
+                        }
+                    end
+                end
+            end
+        end
+	end
+	if SMODS.INIT.MoreFluff and config.painTer then
+	    -- Initialize Painter
+        local pate = {
+            loc = {
+                name = "Painter",
+                text = {
+                    "All {C:diamonds}Diamond{} suit cards have",
+					"{C:green}#2# in #1#{} chance to",  
+                    "Create an {C:colourcard}Colour{} card when played",
+                }
+            },
+            ability_name = "painTer",
+            slug = "paint",
+            ability = {
+                extra = {odds = 5}
+            },
+            rarity = 2,
+            cost = 12,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Painter
+        local joker_pate = SMODS.Joker:new(
+            pate.ability_name,
+            pate.slug,
+            pate.ability,
+            { x = 0, y = 0 },
+            pate.loc,
+            pate.rarity,
+            pate.cost,
+            pate.unlocked,
+            pate.discovered,
+            pate.blueprint_compat,
+            pate.eternal_compat
+        )
+        joker_pate:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_pate = SMODS.Sprite:new(
+            "j_" .. pate.slug,
+            flounderJokers.path,
+            "j_" .. pate.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_pate:register()
+
+        -- Set local variables for Painter
+        function SMODS.Jokers.j_paint.loc_def(self)
+            return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
+        end
+        -- Calculate
+        SMODS.Jokers.j_paint.calculate = function(self, context)
+	       if self.ability.name ==  'painTer' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Diamonds") then
+                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+					    if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                            G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                            G.E_MANAGER:add_event(Event({
+                                trigger = 'before',
+                                delay = 0.0,
+                                func = (function()
+                                        local card = create_card('Colour',G.consumeables, nil, nil, nil, nil, nil, 'cli')
+                                        card:add_to_deck()
+                                        G.consumeables:emplace(card)
+                                        G.GAME.consumeable_buffer = 0
+                                    return true
+                                end)}))
+                            card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_tarot'), colour = G.C.PURPLE})
+                        end
+                        return {
+                            card = self
+                        }
+                    end
+                end
+            end
+        end
+	end
+    if SMODS.INIT.Reverie and config.diRector then
+	    -- Initialize Director
+        local dire = {
+            loc = {
+                name = "Director",
+                text = {
+                    "All {C:spades}Spade{} suit cards have",
+					"{C:green}#2# in #1#{} chance to",  
+                    "Create a {C:cine}Cinema{} card when played",
+                }
+            },
+            ability_name = "diRector",
+            slug = "direc",
+            ability = {
+                extra = {odds = 5}
+            },
+            rarity = 2,
+            cost = 12,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Palm Reader
+        local joker_dire = SMODS.Joker:new(
+            dire.ability_name,
+            dire.slug,
+            dire.ability,
+            { x = 0, y = 0 },
+            dire.loc,
+            dire.rarity,
+            dire.cost,
+            dire.unlocked,
+            dire.discovered,
+            dire.blueprint_compat,
+            dire.eternal_compat
+        )
+        joker_dire:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_dire = SMODS.Sprite:new(
+            "j_" .. dire.slug,
+            flounderJokers.path,
+            "j_" .. dire.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_dire:register()
+
+        -- Set local variables for Palm Reader
+        function SMODS.Jokers.j_direc.loc_def(self)
+            return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
+        end
+        -- Calculate
+        SMODS.Jokers.j_direc.calculate = function(self, context)
+	       if self.ability.name ==  'diRector' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Spades") then
+                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+					    if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                            G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                            G.E_MANAGER:add_event(Event({
+                                trigger = 'before',
+                                delay = 0.0,
+                                func = (function()
+                                        local card = create_card('Cine',G.consumeables, nil, nil, nil, nil, nil, '8ba')
+                                        card:add_to_deck()
+                                        G.consumeables:emplace(card)
+                                        G.GAME.consumeable_buffer = 0
+                                    return true
+                                end)}))
+                            card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_tarot'), colour = G.C.PURPLE})
+                        end
+                        return {
+                            card = self
+                        }
+                    end
+                end
+            end
+        end
+	end
+	if config.orbit then
+	    -- Initialize Orbit
+        local orit = {
+            loc = {
+                name = "Orbit",
+                text = {
+                    "All {C:hearts}Heart{} suit cards have",
+					"{C:green}#2# in #1#{} chance to",  
+                    "Create an {C:planet}Planet{} card when played",
+                }
+            },
+            ability_name = "orbit",
+            slug = "orb",
+            ability = {
+                extra = {odds = 5}
+            },
+            rarity = 2,
+            cost = 12,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+
+        -- Initialize Palm Reader
+        local joker_orit = SMODS.Joker:new(
+            orit.ability_name,
+            orit.slug,
+            orit.ability,
+            { x = 0, y = 0 },
+            orit.loc,
+            orit.rarity,
+            orit.cost,
+            orit.unlocked,
+            orit.discovered,
+            orit.blueprint_compat,
+            orit.eternal_compat
+        )
+        joker_orit:register()
+
+        -- Initialize Sprite for Jokers
+        local sprite_orit = SMODS.Sprite:new(
+            "j_" .. orit.slug,
+            flounderJokers.path,
+            "j_" .. orit.slug .. ".png",
+            71,
+            95,
+            "asset_atli"
+        )
+        sprite_orit:register()
+
+        -- Set local variables for Palm Reader
+        function SMODS.Jokers.j_orb.loc_def(self)
+            return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
+        end
+        -- Calculate
+        SMODS.Jokers.j_orb.calculate = function(self, context)
+	       if self.ability.name ==  'orbit' then
+		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Hearts") then
+                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+					    if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                            G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                            G.E_MANAGER:add_event(Event({
+                                trigger = 'before',
+                                delay = 0.0,
+                                func = (function()
+                                    if G.GAME.last_hand_played then
+                                        local _planet = 0
+                                        for k, v in pairs(G.P_CENTER_POOLS.Planet) do
+                                            if v.config.hand_type == G.GAME.last_hand_played then
+                                                _planet = v.key
+                                            end
+                                        end
+                                        local card = create_card(card_type,G.consumeables, nil, nil, nil, nil, _planet, '8ba')
+                                        card:add_to_deck()
+                                        G.consumeables:emplace(card)
+                                        G.GAME.consumeable_buffer = 0
+                                    end
+                                    return true
+                                end)}))
+                            card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_planet'), colour = G.C.SECONDARY_SET.Planet})
+                        end
+                        return ret
+                    end
+				end
+			end
+		end
+	end
+	
+	----- MusicSuit collab !!!!! -----------------
 	----------------------------------------------
 	
 	if SMODS.INIT.MusicalSuit and config.crystalizedStone then
@@ -3005,98 +3434,7 @@ function SMODS.INIT.flounderjokers()
 	        end
         end
     end
-    if SMODS.INIT.CrownsSuit and SMODS.INIT.CodexArcanum and config.witchDoctor then
-	
-	    -- Create Witch Doctor
-        local wido = {
-            loc = {
-                name = "Witch Doctor",
-                text = {
-                    "All {C:crowns}Crown{} suit cards have",
-					"{C:green}#2# in #1#{} chance to",  
-                    "Create an {C:alchemical}Alchemical{} card when played",
-                }
-            },
-            ability_name = "witchDoctor",
-            slug = "witchdo",
-            ability = {
-                extra = {odds = 10, used = false}
-            },
-            rarity = 2,
-            cost = 6,
-            unlocked = true,
-            discovered = true,
-            blueprint_compat = true,
-            eternal_compat = true
-        }
-
-        -- Initialize Kings Wrath
-        local joker_wido = SMODS.Joker:new(
-            wido.ability_name,
-            wido.slug,
-            wido.ability,
-            { x = 0, y = 0 },
-            wido.loc,
-            wido.rarity,
-            wido.cost,
-            wido.unlocked,
-            wido.discovered,
-            wido.blueprint_compat,
-            wido.eternal_compat
-        )
-        joker_wido:register()
-
-        -- Initialize Sprite for Jokers
-        local sprite_wido = SMODS.Sprite:new(
-            "j_" .. wido.slug,
-            flounderJokers.path,
-            "j_" .. wido.slug .. ".png",
-            71,
-            95,
-            "asset_atli"
-        )
-        sprite_wido:register()
-
-        -- Set local variables for Kings Wrath
-        function SMODS.Jokers.j_witchdo.loc_def(self)
-            return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.used}
-        end
-        -- Calculate
-        SMODS.Jokers.j_witchdo.calculate = function(self, context)
-	       if self.ability.name ==  'witchDoctor' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Crowns") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
-                        self.ability.extra.used = false
-						if not context.blueprint and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
-                            add_random_alchemical(self)
-                            card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('p_plus_alchemical'), colour = G.C.SECONDARY_SET.Alchemy})
-                        end
-					end
-				end
-            end
-            if context.using_consumeable and not context.consumeable.config.in_booster then
-                if context.consumeable.ability.set == 'Alchemical' and self.ability.extra.used == false then
-                    G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
-                    G.E_MANAGER:add_event(Event({
-                        func = (function()
-                            G.E_MANAGER:add_event(Event({
-                                func = function() 
-                                    local card = create_card('Tarot',G.consumeables, nil, nil, nil, nil, nil, 'car')
-                                    card:set_edition({negative = true})
-                                    card:add_to_deck()
-                                    G.consumeables:emplace(card)
-                                    G.GAME.consumeable_buffer = 0
-                                    return true
-                                end}))   
-                                card_eval_status_text(context.blueprint_card or self, 'extra', nil, nil, nil, {message = localize('k_plus_tarot'), colour = G.C.PURPLE})                       
-                            return true
-                        end)}))
-                    self.ability.extra.used = true
-                end
-            end
-        end
-    end
-	
+    
 ----- SixSuit collab !!!!! -------------------
 ----------------------------------------------
 

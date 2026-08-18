@@ -1,0 +1,16 @@
+# Isolated certification sandboxes and package staging
+dist/runtime-smoke-*/
+dist/FloundersJokers/
+
+# Local tooling and transient output
+node_modules/
+*.log
+.fj-*
+*.tmp
+*.bak
+
+# OS/editor metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

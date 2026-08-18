@@ -1,13 +1,8 @@
---- STEAMODDED HEADER
---- MOD_NAME: Flounder's Jokers
---- MOD_ID: flounderjokers
---- MOD_AUTHOR: [Flounder]
---- MOD_DESCRIPTION: adds 4 jokers with effects: rerolls have chance to add jokers of higher rarity 
---- BADGE_COLOUR: b43254
-----------------------------------------------
-------------MOD CODE -------------------------
+-- Flounder's original Joker catalogue, maintained through Steamodded's
+-- official 0.9.8 compatibility adapter. Modern objects live in main.lua and
+-- modules/. The original pre-migration source is preserved in archive/.
 
-local config = {
+local defaults = {
     -- Jokers
     commonJoker = true,
     uncommonJoker = true,
@@ -65,6 +60,25 @@ local config = {
 	orbit = true,
 	
 }
+
+local config = (SMODS.current_mod and SMODS.current_mod.config) or {}
+for key, value in pairs(defaults) do
+    if config[key] == nil then config[key] = value end
+end
+
+local function mod_loaded(...)
+    for _, id in ipairs({...}) do
+        local mod = SMODS.Mods and SMODS.Mods[id]
+        if mod and mod.can_load ~= false and not mod.disabled then return true end
+    end
+    return false
+end
+
+local function fj_roll(card)
+    local center = card and card.config and card.config.center
+    local key = center and center.key or (card and card.ability and card.ability.name) or 'unknown'
+    return pseudorandom('fj_' .. tostring(key))
+end
 
 local seals = {
     "Gold",
@@ -281,21 +295,6 @@ local function create_tarot(joker, tarot)
         })
     end
 	
-    if first_pass and not (_c.set == 'Edition') and badges then
-        for k, v in ipairs(badges) do
-            if v == 'foil' then info_queue[#info_queue+1] = G.P_CENTERS['e_foil'] end
-            if v == 'holographic' then info_queue[#info_queue+1] = G.P_CENTERS['e_holo'] end
-            if v == 'polychrome' then info_queue[#info_queue+1] = G.P_CENTERS['e_polychrome'] end
-            if v == 'negative' then info_queue[#info_queue+1] = G.P_CENTERS['e_negative'] end
-            if v == 'negative_consumable' then info_queue[#info_queue+1] = {key = 'e_negative_consumable', set = 'Edition', config = {extra = 1}} end
-            if v == 'gold_seal' then info_queue[#info_queue+1] = {key = 'gold_seal', set = 'Other'} end
-            if v == 'blue_seal' then info_queue[#info_queue+1] = {key = 'blue_seal', set = 'Other'} end
-            if v == 'red_seal' then info_queue[#info_queue+1] = {key = 'red_seal', set = 'Other'} end
-            if v == 'purple_seal' then info_queue[#info_queue+1] = {key = 'purple_seal', set = 'Other'} end
-            if v == 'eternal' then info_queue[#info_queue+1] = {key = 'eternal', set = 'Other'} end
-            if v == 'pinned_left' then info_queue[#info_queue+1] = {key = 'pinned_left', set = 'Other'} end
-        end
-    end
 end
 
 local function create_planet(joker, planet, other_joker)
@@ -339,7 +338,7 @@ local function create_joker(joker, cjoker, rarity)
            trigger = 'before',
            delay = 0.0,
            func = (function()
-               local card = create_card('Joker', G.joker, rarity, nil, nil, nil, cjoker, 'len')
+               local card = create_card('Joker', G.jokers, rarity, nil, nil, nil, cjoker, 'len')
                card:add_to_deck()
                G.jokers:emplace(card)
                G.GAME.joker_buffer = 0
@@ -452,13 +451,15 @@ function SMODS.INIT.flounderjokers()
             cojo.unlocked,
             cojo.discovered,
             cojo.blueprint_compat,
-            cojo.eternal_compat
+            cojo.eternal_compat,
+            nil,
+            cojo.slug
         )
         joker_cojo:register()
 
         -- Initialize Sprite for Jokers
         local sprite_cojo = SMODS.Sprite:new(
-            "j_" .. cojo.slug,
+            cojo.slug,
             flounderJokers.path,
             "j_" .. cojo.slug .. ".png",
             71,
@@ -468,17 +469,16 @@ function SMODS.INIT.flounderjokers()
         sprite_cojo:register()
 
         -- Set local variables for Common Joker
-        function SMODS.Jokers.j_common.loc_def(self)
+        function joker_cojo.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.tags, self.ability.extra.tag, self.ability.extra.tag_name}
         end
         -- Calculate
-        SMODS.Jokers.j_common.calculate = function(self, context)
+        joker_cojo.calculate = function(self, context)
             if context.reroll_shop and not context.individual and not context.repetition and not context.blueprint then
-                if pseudorandom('lucky_money') < G.GAME.probabilities.normal / self.ability.extra.odds then
+                if fj_roll(self) < G.GAME.probabilities.normal / self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                     G.E_MANAGER:add_event(Event({func = function()
                         add_tag(Tag(self.ability.extra.tag))
-                        play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
-                        play_sound('holo1', 1.2 + math.random()*0.1, 0.4)
                     return true end }))
                     return {
                         message = localize {
@@ -526,12 +526,14 @@ function SMODS.INIT.flounderjokers()
             unjo.unlocked,
             unjo.discovered,
             unjo.blueprint_compat,
-            unjo.eternal_compat
+            unjo.eternal_compat,
+            nil,
+            unjo.slug
         )
         joker_unjo:register()
 
         local sprite_unjo = SMODS.Sprite:new(
-            "j_" .. unjo.slug,
+            unjo.slug,
             flounderJokers.path,
             "j_" .. unjo.slug .. ".png",
             71,
@@ -540,17 +542,16 @@ function SMODS.INIT.flounderjokers()
         )
         sprite_unjo:register()
 
-        function SMODS.Jokers.j_uncommon.loc_def(self)
+        function joker_unjo.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.tags, self.ability.extra.tag, self.ability.extra.tag_name}
         end
         -- Calculate
-        SMODS.Jokers.j_uncommon.calculate = function(self, context)
+        joker_unjo.calculate = function(self, context)
             if context.reroll_shop and not context.individual and not context.repetition and not context.blueprint then
-                if pseudorandom('lucky_money') < G.GAME.probabilities.normal / self.ability.extra.odds then
+                if fj_roll(self) < G.GAME.probabilities.normal / self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                     G.E_MANAGER:add_event(Event({func = function()
                         add_tag(Tag(self.ability.extra.tag))
-                        play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
-                        play_sound('holo1', 1.2 + math.random()*0.1, 0.4)
                     return true end }))
                     return {
                         message = localize {
@@ -598,12 +599,14 @@ function SMODS.INIT.flounderjokers()
             rajo.unlocked,
             rajo.discovered,
             rajo.blueprint_compat,
-            rajo.eternal_compat
+            rajo.eternal_compat,
+            nil,
+            rajo.slug
         )
         joker_rajo:register()
 
         local sprite_rajo = SMODS.Sprite:new(
-            "j_" .. rajo.slug,
+            rajo.slug,
             flounderJokers.path,
             "j_" .. rajo.slug .. ".png",
             71,
@@ -612,14 +615,14 @@ function SMODS.INIT.flounderjokers()
         )
         sprite_rajo:register()
 
-        function SMODS.Jokers.j_rare.loc_def(self)
+        function joker_rajo.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.spectrals, self.ability.extra.spectral, self.ability.extra.spectral_name}
         end
         -- Calculate
-        SMODS.Jokers.j_rare.calculate = function(self, context)
+        joker_rajo.calculate = function(self, context)
             if context.reroll_shop and not context.individual and not context.repetition and not context.blueprint then
-                if pseudorandom('lucky_money') < G.GAME.probabilities.normal / self.ability.extra.odds then
-                     play_sound('timpani')
+                if fj_roll(self) < G.GAME.probabilities.normal / self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                      create_joker(self, nil, "legendary")  --creates a random legendary joker
                  end
              end
@@ -660,12 +663,14 @@ function SMODS.INIT.flounderjokers()
             lejo.unlocked,
             lejo.discovered,
             lejo.blueprint_compat,
-            lejo.eternal_compat
+            lejo.eternal_compat,
+            nil,
+            lejo.slug
         )
         joker_lejo:register()
 
         local sprite_lejo = SMODS.Sprite:new(
-            "j_" .. lejo.slug,
+            lejo.slug,
             flounderJokers.path,
             "j_" .. lejo.slug .. ".png",
             71,
@@ -674,17 +679,16 @@ function SMODS.INIT.flounderjokers()
         )
         sprite_lejo:register()
 
-        function SMODS.Jokers.j_legendary.loc_def(self)
+        function joker_lejo.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.tags, self.ability.extra.tag, self.ability.extra.tag_name}
         end
         -- Calculate
-        SMODS.Jokers.j_legendary.calculate = function(self, context)
+        joker_lejo.calculate = function(self, context)
             if context.reroll_shop and not context.individual and not context.repetition and not context.blueprint then
-                if pseudorandom('lucky_money') < G.GAME.probabilities.normal / self.ability.extra.odds then
+                if fj_roll(self) < G.GAME.probabilities.normal / self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                     G.E_MANAGER:add_event(Event({func = function()
                         add_tag(Tag(self.ability.extra.tag))
-                        play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
-                        play_sound('holo1', 1.2 + math.random()*0.1, 0.4)
                     return true end }))
                     return {
                         message = localize {
@@ -733,13 +737,15 @@ function SMODS.INIT.flounderjokers()
             lust.unlocked,
             lust.discovered,
             lust.blueprint_compat,
-            lust.eternal_compat
+            lust.eternal_compat,
+            nil,
+            lust.slug
         )
         joker_lust:register()
 
         -- Initialize Sprite for Jokers
         local sprite_lust = SMODS.Sprite:new(
-            "j_" .. lust.slug,
+            lust.slug,
             flounderJokers.path,
             "j_" .. lust.slug .. ".png",
             71,
@@ -749,14 +755,15 @@ function SMODS.INIT.flounderjokers()
         sprite_lust:register()
 
         -- Set local variables for Lucky Stone
-        function SMODS.Jokers.j_lucky.loc_def(self)
+        function joker_lust.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.Xmult}
         end
         -- Calculate
-        SMODS.Jokers.j_lucky.calculate = function(self, context)
+        joker_lust.calculate = function(self, context)
 	       if self.ability.name ==  'luckyStone' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Clubs") then 
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Clubs") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         return {
                             x_mult = self.ability.extra.Xmult,
                             card = self
@@ -802,13 +809,15 @@ function SMODS.INIT.flounderjokers()
             crst.unlocked,
             crst.discovered,
             crst.blueprint_compat,
-            crst.eternal_compat
+            crst.eternal_compat,
+            nil,
+            crst.slug
         )
         joker_crst:register()
 
         -- Initialize Sprite for Jokers
         local sprite_crst = SMODS.Sprite:new(
-            "j_" .. crst.slug,
+            crst.slug,
             flounderJokers.path,
             "j_" .. crst.slug .. ".png",
             71,
@@ -818,14 +827,15 @@ function SMODS.INIT.flounderjokers()
         sprite_crst:register()
 
         -- Set local variables for Cracked Stone
-        function SMODS.Jokers.j_cracked.loc_def(self)
+        function joker_crst.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.Xmult}
         end
         -- Calculate
-        SMODS.Jokers.j_cracked.calculate = function(self, context)
+        joker_crst.calculate = function(self, context)
 	       if self.ability.name ==  'crackedStone' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Spades") then 
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Spades") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         return {
                             x_mult = self.ability.extra.Xmult,
                             card = self
@@ -871,13 +881,15 @@ function SMODS.INIT.flounderjokers()
             shst.unlocked,
             shst.discovered,
             shst.blueprint_compat,
-            shst.eternal_compat
+            shst.eternal_compat,
+            nil,
+            shst.slug
         )
         joker_shst:register()
 
         -- Initialize Sprite for Jokers
         local sprite_shst = SMODS.Sprite:new(
-            "j_" .. shst.slug,
+            shst.slug,
             flounderJokers.path,
             "j_" .. shst.slug .. ".png",
             71,
@@ -887,14 +899,15 @@ function SMODS.INIT.flounderjokers()
         sprite_shst:register()
 
         -- Set local variables for Shiny Stone
-        function SMODS.Jokers.j_shiny.loc_def(self)
+        function joker_shst.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.Xmult}
         end
 		-- Calculate
-        SMODS.Jokers.j_shiny.calculate = function(self, context)
+        joker_shst.calculate = function(self, context)
 	       if self.ability.name ==  'shinyStone' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Diamonds") then 
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Diamonds") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         return {
                             x_mult = self.ability.extra.Xmult,
                             card = self
@@ -940,13 +953,15 @@ function SMODS.INIT.flounderjokers()
             sphe.unlocked,
             sphe.discovered,
             sphe.blueprint_compat,
-            sphe.eternal_compat
+            sphe.eternal_compat,
+            nil,
+            sphe.slug
         )
         joker_sphe:register()
 
         -- Initialize Sprite for Jokers
         local sprite_sphe = SMODS.Sprite:new(
-            "j_" .. sphe.slug,
+            sphe.slug,
             flounderJokers.path,
             "j_" .. sphe.slug .. ".png",
             71,
@@ -956,13 +971,13 @@ function SMODS.INIT.flounderjokers()
         sprite_sphe:register()
 
         -- Set local variables for Spear Head
-        function SMODS.Jokers.j_spear.loc_def(self)
+        function joker_sphe.loc_def(self)
             return { self.ability.extra.chips}
         end
 		-- Calculate
-        SMODS.Jokers.j_spear.calculate = function(self, context)
+        joker_sphe.calculate = function(self, context)
 	       if self.ability.name ==  'spearHead' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Clubs") then 
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Clubs") then
                     return {
                         chips = self.ability.extra.chips,
                         card = self
@@ -1007,13 +1022,15 @@ function SMODS.INIT.flounderjokers()
             buti.unlocked,
             buti.discovered,
             buti.blueprint_compat,
-            buti.eternal_compat
+            buti.eternal_compat,
+            nil,
+            buti.slug
         )
         joker_buti:register()
 
         -- Initialize Sprite for Jokers
         local sprite_buti = SMODS.Sprite:new(
-            "j_" .. buti.slug,
+            buti.slug,
             flounderJokers.path,
             "j_" .. buti.slug .. ".png",
             71,
@@ -1023,13 +1040,13 @@ function SMODS.INIT.flounderjokers()
         sprite_buti:register()
 
         -- Set local variables for Bullet Tip
-        function SMODS.Jokers.j_bullet.loc_def(self)
+        function joker_buti.loc_def(self)
             return { self.ability.extra.chips}
         end
 		-- Calculate
-        SMODS.Jokers.j_bullet.calculate = function(self, context)
+        joker_buti.calculate = function(self, context)
 	       if self.ability.name ==  'bulletTip' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Diamonds") then 
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Diamonds") then
                     return {
                         chips = self.ability.extra.chips,
                         card = self
@@ -1074,13 +1091,15 @@ function SMODS.INIT.flounderjokers()
             miti.unlocked,
             miti.discovered,
             miti.blueprint_compat,
-            miti.eternal_compat
+            miti.eternal_compat,
+            nil,
+            miti.slug
         )
         joker_miti:register()
 
         -- Initialize Sprite for Jokers
         local sprite_miti = SMODS.Sprite:new(
-            "j_" .. miti.slug,
+            miti.slug,
             flounderJokers.path,
             "j_" .. miti.slug .. ".png",
             71,
@@ -1090,13 +1109,13 @@ function SMODS.INIT.flounderjokers()
         sprite_miti:register()
 
         -- Set local variables for Missile Tip
-        function SMODS.Jokers.j_missile.loc_def(self)
+        function joker_miti.loc_def(self)
             return { self.ability.extra.chips}
         end
 		-- Calculate
-        SMODS.Jokers.j_missile.calculate = function(self, context)
+        joker_miti.calculate = function(self, context)
 	       if self.ability.name ==  'missileTip' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Hearts") then 
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Hearts") then
                     return {
                         chips = self.ability.extra.chips,
                         card = self
@@ -1141,13 +1160,15 @@ function SMODS.INIT.flounderjokers()
             blge.unlocked,
             blge.discovered,
             blge.blueprint_compat,
-            blge.eternal_compat
+            blge.eternal_compat,
+            nil,
+            blge.slug
         )
         joker_blge:register()
 
         -- Initialize Sprite for Jokers
         local sprite_blge = SMODS.Sprite:new(
-            "j_" .. blge.slug,
+            blge.slug,
             flounderJokers.path,
             "j_" .. blge.slug .. ".png",
             71,
@@ -1157,11 +1178,11 @@ function SMODS.INIT.flounderjokers()
         sprite_blge:register()
 
         -- Set local variables for Blood Gem
-        function SMODS.Jokers.j_blood.loc_def(self)
+        function joker_blge.loc_def(self)
             return { self.ability.extra.money}
         end
 		-- Calculate
-        SMODS.Jokers.j_blood.calculate = function(self, context)
+        joker_blge.calculate = function(self, context)
 	       if self.ability.name ==  'bloodGem' then
 		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Hearts") then
                     G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.extra.money
@@ -1210,13 +1231,15 @@ function SMODS.INIT.flounderjokers()
             loge.unlocked,
             loge.discovered,
             loge.blueprint_compat,
-            loge.eternal_compat
+            loge.eternal_compat,
+            nil,
+            loge.slug
         )
         joker_loge:register()
 
         -- Initialize Sprite for Jokers
         local sprite_loge = SMODS.Sprite:new(
-            "j_" .. loge.slug,
+            loge.slug,
             flounderJokers.path,
             "j_" .. loge.slug .. ".png",
             71,
@@ -1226,13 +1249,13 @@ function SMODS.INIT.flounderjokers()
         sprite_loge:register()
 
         -- Set local variables for Lost Gem
-        function SMODS.Jokers.j_lost.loc_def(self)
+        function joker_loge.loc_def(self)
             return { self.ability.extra.money}
         end
 		-- Calculate
-        SMODS.Jokers.j_lost.calculate = function(self, context)
+        joker_loge.calculate = function(self, context)
 	       if self.ability.name ==  'lostGem' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Spades") then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Spades") then
                     G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.extra.money
 					G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
                     return {
@@ -1279,13 +1302,15 @@ function SMODS.INIT.flounderjokers()
             suge.unlocked,
             suge.discovered,
             suge.blueprint_compat,
-            suge.eternal_compat
+            suge.eternal_compat,
+            nil,
+            suge.slug
         )
         joker_suge:register()
 
         -- Initialize Sprite for Jokers
         local sprite_suge = SMODS.Sprite:new(
-            "j_" .. suge.slug,
+            suge.slug,
             flounderJokers.path,
             "j_" .. suge.slug .. ".png",
             71,
@@ -1295,13 +1320,13 @@ function SMODS.INIT.flounderjokers()
         sprite_suge:register()
 
         -- Set local variables for Sunken Gem
-        function SMODS.Jokers.j_sunken.loc_def(self)
+        function joker_suge.loc_def(self)
             return { self.ability.extra.money}
         end
 		-- Calculate
-        SMODS.Jokers.j_sunken.calculate = function(self, context)
+        joker_suge.calculate = function(self, context)
 	       if self.ability.name ==  'sunkenGem' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Clubs") then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Clubs") then
                     G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.extra.money
 					G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
                     return {
@@ -1348,13 +1373,15 @@ function SMODS.INIT.flounderjokers()
             imto.unlocked,
             imto.discovered,
             imto.blueprint_compat,
-            imto.eternal_compat
+            imto.eternal_compat,
+            nil,
+            imto.slug
         )
         joker_imto:register()
 
         -- Initialize Sprite for Jokers
         local sprite_imto = SMODS.Sprite:new(
-            "j_" .. imto.slug,
+            imto.slug,
             flounderJokers.path,
             "j_" .. imto.slug .. ".png",
             71,
@@ -1364,11 +1391,11 @@ function SMODS.INIT.flounderjokers()
         sprite_imto:register()
 
         -- Set local variables for Imperial Topaz
-        function SMODS.Jokers.j_imperial.loc_def(self)
+        function joker_imto.loc_def(self)
             return { self.ability.extra.mult}
         end
 		-- Calculate
-        SMODS.Jokers.j_imperial.calculate = function(self, context)
+        joker_imto.calculate = function(self, context)
 	       if self.ability.name ==  'imperialTopaz' then
 		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Diamonds") then
                     return {
@@ -1415,13 +1442,15 @@ function SMODS.INIT.flounderjokers()
             moru.unlocked,
             moru.discovered,
             moru.blueprint_compat,
-            moru.eternal_compat
+            moru.eternal_compat,
+            nil,
+            moru.slug
         )
         joker_moru:register()
 
         -- Initialize Sprite for Jokers
         local sprite_moru = SMODS.Sprite:new(
-            "j_" .. moru.slug,
+            moru.slug,
             flounderJokers.path,
             "j_" .. moru.slug .. ".png",
             71,
@@ -1431,11 +1460,11 @@ function SMODS.INIT.flounderjokers()
         sprite_moru:register()
 
         -- Set local variables for Mozambique Ruby
-        function SMODS.Jokers.j_mozambique.loc_def(self)
+        function joker_moru.loc_def(self)
             return { self.ability.extra.mult}
         end
 		-- Calculate
-        SMODS.Jokers.j_mozambique.calculate = function(self, context)
+        joker_moru.calculate = function(self, context)
 	       if self.ability.name ==  'mozambiqueRuby' then
 		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Hearts") then
                     return {
@@ -1482,13 +1511,15 @@ function SMODS.INIT.flounderjokers()
             bldi.unlocked,
             bldi.discovered,
             bldi.blueprint_compat,
-            bldi.eternal_compat
+            bldi.eternal_compat,
+            nil,
+            bldi.slug
         )
         joker_bldi:register()
 
         -- Initialize Sprite for Jokers
         local sprite_bldi = SMODS.Sprite:new(
-            "j_" .. bldi.slug,
+            bldi.slug,
             flounderJokers.path,
             "j_" .. bldi.slug .. ".png",
             71,
@@ -1498,11 +1529,11 @@ function SMODS.INIT.flounderjokers()
         sprite_bldi:register()
 
         -- Set local variables for Black Diamond
-        function SMODS.Jokers.j_black.loc_def(self)
+        function joker_bldi.loc_def(self)
             return { self.ability.extra.mult}
         end
 		-- Calculate
-        SMODS.Jokers.j_black.calculate = function(self, context)
+        joker_bldi.calculate = function(self, context)
 	       if self.ability.name ==  'blackDiamond' then
 		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Spades") then
                     return {
@@ -1548,13 +1579,15 @@ function SMODS.INIT.flounderjokers()
             guro.unlocked,
             guro.discovered,
             guro.blueprint_compat,
-            guro.eternal_compat
+            guro.eternal_compat,
+            nil,
+            guro.slug
         )
         joker_guro:register()
 
         -- Initialize Sprite for Jokers
         local sprite_guro = SMODS.Sprite:new(
-            "j_" .. guro.slug,
+            guro.slug,
             flounderJokers.path,
             "j_" .. guro.slug .. ".png",
             71,
@@ -1564,13 +1597,13 @@ function SMODS.INIT.flounderjokers()
         sprite_guro:register()
 
         -- Set local variables for Guns and Roses
-        function SMODS.Jokers.j_guns.loc_def(card)
+        function joker_guro.loc_def(card)
             return { card.ability.extra.loop_amount}
         end
 		-- Calculate
-        SMODS.Jokers.j_guns.calculate = function(self, context)
+        joker_guro.calculate = function(self, context)
 	        if context.repetition and context.cardarea == G.play then
-                if context.other_card:is_suit("Hearts") then
+                if context.other_card and context.other_card:is_suit("Hearts") then
                     return {
                         message = localize('k_again_ex'),
                         repetitions = 1,
@@ -1615,13 +1648,15 @@ function SMODS.INIT.flounderjokers()
             fich.unlocked,
             fich.discovered,
             fich.blueprint_compat,
-            fich.eternal_compat
+            fich.eternal_compat,
+            nil,
+            fich.slug
         )
         joker_fich:register()
 
         -- Initialize Sprite for Jokers
         local sprite_fich = SMODS.Sprite:new(
-            "j_" .. fich.slug,
+            fich.slug,
             flounderJokers.path,
             "j_" .. fich.slug .. ".png",
             71,
@@ -1631,13 +1666,13 @@ function SMODS.INIT.flounderjokers()
         sprite_fich:register()
 
         -- Set local variables for Fish and Chips
-        function SMODS.Jokers.j_fish.loc_def(card)
+        function joker_fich.loc_def(card)
             return { card.ability.extra.loop_amount}
         end
 		-- Calculate
-        SMODS.Jokers.j_fish.calculate = function(self, context)
+        joker_fich.calculate = function(self, context)
 	        if context.repetition and context.cardarea == G.play then
-                if context.other_card:is_suit("Clubs") then
+                if context.other_card and context.other_card:is_suit("Clubs") then
                     return {
                         message = localize('k_again_ex'),
                         repetitions = 1,
@@ -1682,13 +1717,15 @@ function SMODS.INIT.flounderjokers()
             sape.unlocked,
             sape.discovered,
             sape.blueprint_compat,
-            sape.eternal_compat
+            sape.eternal_compat,
+            nil,
+            sape.slug
         )
         joker_sape:register()
 
         -- Initialize Sprite for Jokers
         local sprite_sape = SMODS.Sprite:new(
-            "j_" .. sape.slug,
+            sape.slug,
             flounderJokers.path,
             "j_" .. sape.slug .. ".png",
             71,
@@ -1698,13 +1735,13 @@ function SMODS.INIT.flounderjokers()
         sprite_sape:register()
 
         -- Set local variables for Salt and Pepper
-        function SMODS.Jokers.j_salt.loc_def(card)
+        function joker_sape.loc_def(card)
             return { card.ability.extra.loop_amount}
         end
 		-- Calculate
-        SMODS.Jokers.j_salt.calculate = function(self, context)
+        joker_sape.calculate = function(self, context)
 	        if context.repetition and context.cardarea == G.play then
-                if context.other_card:is_suit("Spades") then
+                if context.other_card and context.other_card:is_suit("Spades") then
                     return {
                         message = localize('k_again_ex'),
                         repetitions = 1,
@@ -1749,13 +1786,15 @@ function SMODS.INIT.flounderjokers()
             mach.unlocked,
             mach.discovered,
             mach.blueprint_compat,
-            mach.eternal_compat
+            mach.eternal_compat,
+            nil,
+            mach.slug
         )
         joker_mach:register()
 
         -- Initialize Macaroni and Cheese
         local sprite_mach = SMODS.Sprite:new(
-            "j_" .. mach.slug,
+            mach.slug,
             flounderJokers.path,
             "j_" .. mach.slug .. ".png",
             71,
@@ -1765,13 +1804,13 @@ function SMODS.INIT.flounderjokers()
         sprite_mach:register()
 
         -- Set local variables for Macaroni and Cheese
-        function SMODS.Jokers.j_macaroni.loc_def(card)
+        function joker_mach.loc_def(card)
             return { card.ability.extra.loop_amount}
         end
 		-- Calculate
-        SMODS.Jokers.j_macaroni.calculate = function(self, context)
+        joker_mach.calculate = function(self, context)
 	        if context.repetition and context.cardarea == G.play then
-                if context.other_card:is_suit("Diamonds") then
+                if context.other_card and context.other_card:is_suit("Diamonds") then
                     return {
                         message = localize('k_again_ex'),
                         repetitions = 1,
@@ -1818,13 +1857,15 @@ function SMODS.INIT.flounderjokers()
             thro.unlocked,
             thro.discovered,
             thro.blueprint_compat,
-            thro.eternal_compat
+            thro.eternal_compat,
+            nil,
+            thro.slug
         )
         joker_thro:register()
 
         -- Initialize Sprite for Jokers
         local sprite_thro = SMODS.Sprite:new(
-            "j_" .. thro.slug,
+            thro.slug,
             flounderJokers.path,
             "j_" .. thro.slug .. ".png",
             71,
@@ -1834,16 +1875,17 @@ function SMODS.INIT.flounderjokers()
         sprite_thro:register()
 
         -- Set local variables for The Robber
-        function SMODS.Jokers.j_robberh.loc_def(self)
+        function joker_thro.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_robberh.calculate = function(self, context)
+        joker_thro.calculate = function(self, context)
 	       if self.ability.name ==  'theRobber' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Spades") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Spades") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         for k, v in ipairs(context.full_hand) do
-                            if v:is_suit("Spades") then 
+                            if v:is_suit("Spades") then
                                 v:set_ability(G.P_CENTERS.m_steel, nil, true)
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
@@ -1895,13 +1937,15 @@ function SMODS.INIT.flounderjokers()
             huso.unlocked,
             huso.discovered,
             huso.blueprint_compat,
-            huso.eternal_compat
+            huso.eternal_compat,
+            nil,
+            huso.slug
         )
         joker_huso:register()
 
         -- Initialize Sprite for Jokers
         local sprite_huso = SMODS.Sprite:new(
-            "j_" .. huso.slug,
+            huso.slug,
             flounderJokers.path,
             "j_" .. huso.slug .. ".png",
             71,
@@ -1911,16 +1955,17 @@ function SMODS.INIT.flounderjokers()
         sprite_huso:register()
 
         -- Set local variables for Hungry Sorcerer
-        function SMODS.Jokers.j_hungryso.loc_def(self)
+        function joker_huso.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_hungryso.calculate = function(self, context)
+        joker_huso.calculate = function(self, context)
 	       if self.ability.name ==  'hungrySorcerer' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Clubs") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Clubs") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         for k, v in ipairs(context.full_hand) do
-                            if v:is_suit("Clubs") then 
+                            if v:is_suit("Clubs") then
                                 v:set_ability(G.P_CENTERS.m_lucky, nil, true)
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
@@ -1972,13 +2017,15 @@ function SMODS.INIT.flounderjokers()
             glbl.unlocked,
             glbl.discovered,
             glbl.blueprint_compat,
-            glbl.eternal_compat
+            glbl.eternal_compat,
+            nil,
+            glbl.slug
         )
         joker_glbl:register()
 
         -- Initialize Sprite for Jokers
         local sprite_glbl = SMODS.Sprite:new(
-            "j_" .. glbl.slug,
+            glbl.slug,
             flounderJokers.path,
             "j_" .. glbl.slug .. ".png",
             71,
@@ -1988,16 +2035,17 @@ function SMODS.INIT.flounderjokers()
         sprite_glbl:register()
 
         -- Set local variables for Glass Blower
-        function SMODS.Jokers.j_glassb.loc_def(self)
+        function joker_glbl.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_glassb.calculate = function(self, context)
+        joker_glbl.calculate = function(self, context)
 	       if self.ability.name ==  'glassBlower' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Diamonds") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Diamonds") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         for k, v in ipairs(context.full_hand) do
-                            if v:is_suit("Diamonds") then 
+                            if v:is_suit("Diamonds") then
                                 v:set_ability(G.P_CENTERS.m_glass, nil, true)
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
@@ -2049,13 +2097,15 @@ function SMODS.INIT.flounderjokers()
             bowi.unlocked,
             bowi.discovered,
             bowi.blueprint_compat,
-            bowi.eternal_compat
+            bowi.eternal_compat,
+            nil,
+            bowi.slug
         )
         joker_bowi:register()
 
         -- Initialize Sprite for Jokers
         local sprite_bowi = SMODS.Sprite:new(
-            "j_" .. bowi.slug,
+            bowi.slug,
             flounderJokers.path,
             "j_" .. bowi.slug .. ".png",
             71,
@@ -2065,16 +2115,17 @@ function SMODS.INIT.flounderjokers()
         sprite_bowi:register()
 
         -- Set local variables for Born Wild
-        function SMODS.Jokers.j_bornw.loc_def(self)
+        function joker_bowi.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_bornw.calculate = function(self, context)
+        joker_bowi.calculate = function(self, context)
 	       if self.ability.name ==  'bornWild' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Hearts") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Hearts") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
 					    for k, v in ipairs(context.full_hand) do
-                            if v:is_suit("Hearts") then 
+                            if v:is_suit("Hearts") then
                                v:set_ability(G.P_CENTERS.m_wild, nil, true)
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
@@ -2126,13 +2177,15 @@ function SMODS.INIT.flounderjokers()
             ovra.unlocked,
             ovra.discovered,
             ovra.blueprint_compat,
-            ovra.eternal_compat
+            ovra.eternal_compat,
+            nil,
+            ovra.slug
         )
         joker_ovra:register()
 
         -- Initialize Sprite for Jokers
         local sprite_ovra = SMODS.Sprite:new(
-            "j_" .. ovra.slug,
+            ovra.slug,
             flounderJokers.path,
             "j_" .. ovra.slug .. ".png",
             71,
@@ -2142,23 +2195,24 @@ function SMODS.INIT.flounderjokers()
         sprite_ovra:register()
 
         -- Set local variables for Over the Rainbow
-        function SMODS.Jokers.j_overt.loc_def(self)
+        function joker_ovra.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_overt.calculate = function(self, context)
+        joker_ovra.calculate = function(self, context)
 	       if self.ability.name ==  'overtheRainbow' then
 		        if context.cardarea == G.play and not context.repetition then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
-					    for k, v in ipairs(context.full_hand) do
-                            next(get_flush(context.full_hand)) do
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
+                        if next(get_flush(context.full_hand)) then
+					        for k, v in ipairs(context.full_hand) do
                                 v:set_edition({polychrome = true}, true, true)
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
                                         v:juice_up()
                                         return true
-							        end
-							    }))
+						        end
+						    }))
                             end
 	                    end
 		            end
@@ -2166,7 +2220,7 @@ function SMODS.INIT.flounderjokers()
             end
 	    end
 	end
-    if SMODS.INIT.CodexArcanum and config.witchDoctor then
+    if mod_loaded('CodexArcanum') and config.witchDoctor then
 	
 	    -- Create Witch Doctor
         local wido = {
@@ -2203,13 +2257,15 @@ function SMODS.INIT.flounderjokers()
             wido.unlocked,
             wido.discovered,
             wido.blueprint_compat,
-            wido.eternal_compat
+            wido.eternal_compat,
+            nil,
+            wido.slug
         )
         joker_wido:register()
 
         -- Initialize Sprite for Jokers
         local sprite_wido = SMODS.Sprite:new(
-            "j_" .. wido.slug,
+            wido.slug,
             flounderJokers.path,
             "j_" .. wido.slug .. ".png",
             71,
@@ -2219,14 +2275,15 @@ function SMODS.INIT.flounderjokers()
         sprite_wido:register()
 
         -- Set local variables for Witch Doctor
-        function SMODS.Jokers.j_witchdo.loc_def(self)
+        function joker_wido.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.used}
         end
         -- Calculate
-        SMODS.Jokers.j_witchdo.calculate = function(self, context)
+        joker_wido.calculate = function(self, context)
 	       if self.ability.name ==  'witchDoctor' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Crowns") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Crowns") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         self.ability.extra.used = false
 						if not context.blueprint and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
                             add_random_alchemical(self)
@@ -2293,13 +2350,15 @@ function SMODS.INIT.flounderjokers()
             pare.unlocked,
             pare.discovered,
             pare.blueprint_compat,
-            pare.eternal_compat
+            pare.eternal_compat,
+            nil,
+            pare.slug
         )
         joker_pare:register()
 
         -- Initialize Sprite for Jokers
         local sprite_pare = SMODS.Sprite:new(
-            "j_" .. pare.slug,
+            pare.slug,
             flounderJokers.path,
             "j_" .. pare.slug .. ".png",
             71,
@@ -2309,14 +2368,15 @@ function SMODS.INIT.flounderjokers()
         sprite_pare:register()
 
         -- Set local variables for Palm Reader
-        function SMODS.Jokers.j_palmr.loc_def(self)
+        function joker_pare.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_palmr.calculate = function(self, context)
+        joker_pare.calculate = function(self, context)
 	       if self.ability.name ==  'palmReader' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Clubs") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Clubs") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
 					    if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
                             G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
                             G.E_MANAGER:add_event(Event({
@@ -2339,7 +2399,7 @@ function SMODS.INIT.flounderjokers()
             end
         end
 	end
-	if SMODS.INIT.MoreFluff and config.painTer then
+	if mod_loaded('MoreFluff') and config.painTer then
 	    -- Initialize Painter
         local pate = {
             loc = {
@@ -2375,13 +2435,15 @@ function SMODS.INIT.flounderjokers()
             pate.unlocked,
             pate.discovered,
             pate.blueprint_compat,
-            pate.eternal_compat
+            pate.eternal_compat,
+            nil,
+            pate.slug
         )
         joker_pate:register()
 
         -- Initialize Sprite for Jokers
         local sprite_pate = SMODS.Sprite:new(
-            "j_" .. pate.slug,
+            pate.slug,
             flounderJokers.path,
             "j_" .. pate.slug .. ".png",
             71,
@@ -2391,14 +2453,15 @@ function SMODS.INIT.flounderjokers()
         sprite_pate:register()
 
         -- Set local variables for Painter
-        function SMODS.Jokers.j_paint.loc_def(self)
+        function joker_pate.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_paint.calculate = function(self, context)
+        joker_pate.calculate = function(self, context)
 	       if self.ability.name ==  'painTer' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Diamonds") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Diamonds") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
 					    if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
                             G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
                             G.E_MANAGER:add_event(Event({
@@ -2421,7 +2484,7 @@ function SMODS.INIT.flounderjokers()
             end
         end
 	end
-    if SMODS.INIT.Reverie and config.diRector then
+    if mod_loaded('Reverie') and config.diRector then
 	    -- Initialize Director
         local dire = {
             loc = {
@@ -2457,13 +2520,15 @@ function SMODS.INIT.flounderjokers()
             dire.unlocked,
             dire.discovered,
             dire.blueprint_compat,
-            dire.eternal_compat
+            dire.eternal_compat,
+            nil,
+            dire.slug
         )
         joker_dire:register()
 
         -- Initialize Sprite for Jokers
         local sprite_dire = SMODS.Sprite:new(
-            "j_" .. dire.slug,
+            dire.slug,
             flounderJokers.path,
             "j_" .. dire.slug .. ".png",
             71,
@@ -2473,14 +2538,15 @@ function SMODS.INIT.flounderjokers()
         sprite_dire:register()
 
         -- Set local variables for Palm Reader
-        function SMODS.Jokers.j_direc.loc_def(self)
+        function joker_dire.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_direc.calculate = function(self, context)
+        joker_dire.calculate = function(self, context)
 	       if self.ability.name ==  'diRector' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Spades") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Spades") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
 					    if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
                             G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
                             G.E_MANAGER:add_event(Event({
@@ -2539,13 +2605,15 @@ function SMODS.INIT.flounderjokers()
             orit.unlocked,
             orit.discovered,
             orit.blueprint_compat,
-            orit.eternal_compat
+            orit.eternal_compat,
+            nil,
+            orit.slug
         )
         joker_orit:register()
 
         -- Initialize Sprite for Jokers
         local sprite_orit = SMODS.Sprite:new(
-            "j_" .. orit.slug,
+            orit.slug,
             flounderJokers.path,
             "j_" .. orit.slug .. ".png",
             71,
@@ -2555,14 +2623,15 @@ function SMODS.INIT.flounderjokers()
         sprite_orit:register()
 
         -- Set local variables for Palm Reader
-        function SMODS.Jokers.j_orb.loc_def(self)
+        function joker_orit.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_orb.calculate = function(self, context)
+        joker_orit.calculate = function(self, context)
 	       if self.ability.name ==  'orbit' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Hearts") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Hearts") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
 					    if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
                             G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
                             G.E_MANAGER:add_event(Event({
@@ -2576,7 +2645,7 @@ function SMODS.INIT.flounderjokers()
                                                 _planet = v.key
                                             end
                                         end
-                                        local card = create_card(card_type,G.consumeables, nil, nil, nil, nil, _planet, '8ba')
+                                        local card = create_card('Planet', G.consumeables, nil, nil, nil, nil, _planet, '8ba')
                                         card:add_to_deck()
                                         G.consumeables:emplace(card)
                                         G.GAME.consumeable_buffer = 0
@@ -2585,7 +2654,9 @@ function SMODS.INIT.flounderjokers()
                                 end)}))
                             card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_planet'), colour = G.C.SECONDARY_SET.Planet})
                         end
-                        return ret
+                        return {
+                            card = self
+                        }
                     end
 				end
 			end
@@ -2595,7 +2666,7 @@ function SMODS.INIT.flounderjokers()
 	----- MusicSuit collab !!!!! -----------------
 	----------------------------------------------
 	
-	if SMODS.INIT.MusicalSuit and config.crystalizedStone then
+	if mod_loaded('MusicalSuit') and config.crystalizedStone then
 	
 	    -- Create Crystalized Stone
         local cyst = {
@@ -2632,13 +2703,15 @@ function SMODS.INIT.flounderjokers()
             cyst.unlocked,
             cyst.discovered,
             cyst.blueprint_compat,
-            cyst.eternal_compat
+            cyst.eternal_compat,
+            nil,
+            cyst.slug
         )
         joker_cyst:register()
 
         -- Initialize Sprite for Jokers
         local sprite_cyst = SMODS.Sprite:new(
-            "j_" .. cyst.slug,
+            cyst.slug,
             flounderJokers.path,
             "j_" .. cyst.slug .. ".png",
             71,
@@ -2648,14 +2721,15 @@ function SMODS.INIT.flounderjokers()
         sprite_cyst:register()
 
         -- Set local variables for Crystalized Stone
-        function SMODS.Jokers.j_crystalized.loc_def(self)
+        function joker_cyst.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.Xmult}
         end
         -- Calculate
-        SMODS.Jokers.j_crystalized.calculate = function(self, context)
+        joker_cyst.calculate = function(self, context)
 	       if self.ability.name ==  'crystalizedStone' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Notes") then 
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Notes") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         return {
                             x_mult = self.ability.extra.Xmult,
                             card = self
@@ -2665,7 +2739,7 @@ function SMODS.INIT.flounderjokers()
 	        end
 		end
 	end
-    if SMODS.INIT.MusicalSuit and config.crystalMagazine then
+    if mod_loaded('MusicalSuit') and config.crystalMagazine then
         -- Create Crystal Magazine
         local crma = {
             loc = {
@@ -2701,13 +2775,15 @@ function SMODS.INIT.flounderjokers()
             crma.unlocked,
             crma.discovered,
             crma.blueprint_compat,
-            crma.eternal_compat
+            crma.eternal_compat,
+            nil,
+            crma.slug
         )
         joker_crma:register()
 
         -- Initialize Sprite for Jokers
         local sprite_crma = SMODS.Sprite:new(
-            "j_" .. crma.slug,
+            crma.slug,
             flounderJokers.path,
             "j_" .. crma.slug .. ".png",
             71,
@@ -2717,13 +2793,13 @@ function SMODS.INIT.flounderjokers()
         sprite_crma:register()
 
         -- Set local variables for Crystal Magazine
-        function SMODS.Jokers.j_crystalm.loc_def(self)
+        function joker_crma.loc_def(self)
             return { self.ability.extra.chips}
         end
 		-- Calculate
-        SMODS.Jokers.j_crystalm.calculate = function(self, context)
+        joker_crma.calculate = function(self, context)
 	       if self.ability.name ==  'crystalMagazine' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Notes") then 
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Notes") then
                     return {
                         chips = self.ability.extra.chips,
                         card = self
@@ -2732,7 +2808,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-	if SMODS.INIT.MusicalSuit and config.pinkPanther then
+	if mod_loaded('MusicalSuit') and config.pinkPanther then
         -- Create Pink Panther
         local pipa = {
             loc = {
@@ -2768,13 +2844,15 @@ function SMODS.INIT.flounderjokers()
             pipa.unlocked,
             pipa.discovered,
             pipa.blueprint_compat,
-            pipa.eternal_compat
+            pipa.eternal_compat,
+            nil,
+            pipa.slug
         )
         joker_pipa:register()
 
         -- Initialize Sprite for Jokers
         local sprite_pipa = SMODS.Sprite:new(
-            "j_" .. pipa.slug,
+            pipa.slug,
             flounderJokers.path,
             "j_" .. pipa.slug .. ".png",
             71,
@@ -2784,13 +2862,13 @@ function SMODS.INIT.flounderjokers()
         sprite_pipa:register()
 
         -- Set local variables for Pink Panther
-        function SMODS.Jokers.j_pinkpa.loc_def(self)
+        function joker_pipa.loc_def(self)
             return { self.ability.extra.mult}
         end
 		-- Calculate
-        SMODS.Jokers.j_pinkpa.calculate = function(self, context)
+        joker_pipa.calculate = function(self, context)
 	       if self.ability.name ==  'pinkPanther' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Notes") then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Notes") then
                     return {
                         mult = self.ability.extra.mult,
                         card = self
@@ -2799,7 +2877,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end    
-    if SMODS.INIT.MusicalSuit and config.loveGem then
+    if mod_loaded('MusicalSuit') and config.loveGem then
         -- Create Love Gem
         local loge = {
             loc = {
@@ -2835,13 +2913,15 @@ function SMODS.INIT.flounderjokers()
             loge.unlocked,
             loge.discovered,
             loge.blueprint_compat,
-            loge.eternal_compat
+            loge.eternal_compat,
+            nil,
+            loge.slug
         )
         joker_loge:register()
 
         -- Initialize Sprite for Jokers
         local sprite_loge = SMODS.Sprite:new(
-            "j_" .. loge.slug,
+            loge.slug,
             flounderJokers.path,
             "j_" .. loge.slug .. ".png",
             71,
@@ -2851,13 +2931,13 @@ function SMODS.INIT.flounderjokers()
         sprite_loge:register()
 
         -- Set local variables for Love Gem
-        function SMODS.Jokers.j_lovege.loc_def(self)
+        function joker_loge.loc_def(self)
             return { self.ability.extra.money}
         end
 		-- Calculate
-        SMODS.Jokers.j_lovege.calculate = function(self, context)
+        joker_loge.calculate = function(self, context)
 	       if self.ability.name ==  'loveGem' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Notes") then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Notes") then
                     G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.extra.money
 					G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
                     return {
@@ -2868,7 +2948,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-    if SMODS.INIT.MusicalSuit and config.rhythmandBlues then
+    if mod_loaded('MusicalSuit') and config.rhythmandBlues then
         -- Create Rhythm and Blues
         local rhbl = {
             loc = {
@@ -2903,13 +2983,15 @@ function SMODS.INIT.flounderjokers()
             rhbl.unlocked,
             rhbl.discovered,
             rhbl.blueprint_compat,
-            rhbl.eternal_compat
+            rhbl.eternal_compat,
+            nil,
+            rhbl.slug
         )
         joker_rhbl:register()
 
         -- Initialize Sprite for Jokers
         local sprite_rhbl = SMODS.Sprite:new(
-            "j_" .. rhbl.slug,
+            rhbl.slug,
             flounderJokers.path,
             "j_" .. rhbl.slug .. ".png",
             71,
@@ -2919,13 +3001,13 @@ function SMODS.INIT.flounderjokers()
         sprite_rhbl:register()
 
         -- Set local variables for Rhythm and Blues
-        function SMODS.Jokers.j_rhythm.loc_def(card)
+        function joker_rhbl.loc_def(card)
             return { card.ability.extra.loop_amount}
         end
 		-- Calculate
-        SMODS.Jokers.j_rhythm.calculate = function(self, context)
+        joker_rhbl.calculate = function(self, context)
 	        if context.repetition and context.cardarea == G.play then
-                if context.other_card:is_suit("Notes") then
+                if context.other_card and context.other_card:is_suit("Notes") then
                     return {
                         message = localize('k_again_ex'),
                         repetitions = 1,
@@ -2935,7 +3017,7 @@ function SMODS.INIT.flounderjokers()
 			end
 	    end
     end
-	if SMODS.INIT.MusicalSuit and config.enchancedSediment then
+	if mod_loaded('MusicalSuit') and config.enchancedSediment then
 	    -- Create Enhanced Sediment
         local ense = {
             loc = {
@@ -2972,13 +3054,15 @@ function SMODS.INIT.flounderjokers()
             ense.unlocked,
             ense.discovered,
             ense.blueprint_compat,
-            ense.eternal_compat
+            ense.eternal_compat,
+            nil,
+            ense.slug
         )
         joker_ense:register()
 
         -- Initialize Sprite for Jokers
         local sprite_ense = SMODS.Sprite:new(
-            "j_" .. ense.slug,
+            ense.slug,
             flounderJokers.path,
             "j_" .. ense.slug .. ".png",
             71,
@@ -2988,16 +3072,17 @@ function SMODS.INIT.flounderjokers()
         sprite_ense:register()
 
         -- Set local variables for Enhanced Sediment
-        function SMODS.Jokers.j_enhanceds.loc_def(self)
+        function joker_ense.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_enhanceds.calculate = function(self, context)
+        joker_ense.calculate = function(self, context)
 	       if self.ability.name ==  'enchancedSediment' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Notes") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Notes") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         for k, v in ipairs(context.full_hand) do
-                            if v:is_suit("Notes") then 
+                            if v:is_suit("Notes") then
                                 v:set_ability(G.P_CENTERS.m_stone, nil, true)
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
@@ -3016,7 +3101,7 @@ function SMODS.INIT.flounderjokers()
 	----- CrownSuit collab !!!!! -----------------
 	----------------------------------------------
 	
-	if SMODS.INIT.CrownsSuit and config.luxuryStone then
+	if mod_loaded('CrownsSuit') and config.luxuryStone then
 	
 	    -- Create Luxury Stone
         local lxst = {
@@ -3053,13 +3138,15 @@ function SMODS.INIT.flounderjokers()
             lxst.unlocked,
             lxst.discovered,
             lxst.blueprint_compat,
-            lxst.eternal_compat
+            lxst.eternal_compat,
+            nil,
+            lxst.slug
         )
         joker_lxst:register()
 
         -- Initialize Sprite for Jokers
         local sprite_lxst = SMODS.Sprite:new(
-            "j_" .. lxst.slug,
+            lxst.slug,
             flounderJokers.path,
             "j_" .. lxst.slug .. ".png",
             71,
@@ -3069,14 +3156,15 @@ function SMODS.INIT.flounderjokers()
         sprite_lxst:register()
 
         -- Set local variables for Luxury Stone
-        function SMODS.Jokers.j_luxury.loc_def(self)
+        function joker_lxst.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.Xmult}
         end
         -- Calculate
-        SMODS.Jokers.j_luxury.calculate = function(self, context)
+        joker_lxst.calculate = function(self, context)
 	       if self.ability.name ==  'luxuryStone' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Crowns") then 
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Crowns") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         return {
                             x_mult = self.ability.extra.Xmult,
                             card = self
@@ -3086,7 +3174,7 @@ function SMODS.INIT.flounderjokers()
 	        end
 		end
 	end
-    if SMODS.INIT.CrownsSuit and config.sunGun then
+    if mod_loaded('CrownsSuit') and config.sunGun then
         -- Create Sun Gun
         local sugu = {
             loc = {
@@ -3122,13 +3210,15 @@ function SMODS.INIT.flounderjokers()
             sugu.unlocked,
             sugu.discovered,
             sugu.blueprint_compat,
-            sugu.eternal_compat
+            sugu.eternal_compat,
+            nil,
+            sugu.slug
         )
         joker_sugu:register()
 
         -- Initialize Sprite for Jokers
         local sprite_sugu = SMODS.Sprite:new(
-            "j_" .. sugu.slug,
+            sugu.slug,
             flounderJokers.path,
             "j_" .. sugu.slug .. ".png",
             71,
@@ -3138,13 +3228,13 @@ function SMODS.INIT.flounderjokers()
         sprite_sugu:register()
 
         -- Set local variables for Sun Gun
-        function SMODS.Jokers.j_sung.loc_def(self)
+        function joker_sugu.loc_def(self)
             return { self.ability.extra.chips}
         end
 		-- Calculate
-        SMODS.Jokers.j_sung.calculate = function(self, context)
+        joker_sugu.calculate = function(self, context)
 	       if self.ability.name ==  'sunGun' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Crowns") then 
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Crowns") then
                     return {
                         chips = self.ability.extra.chips,
                         card = self
@@ -3153,7 +3243,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-    if SMODS.INIT.CrownsSuit and config.holyGem then
+    if mod_loaded('CrownsSuit') and config.holyGem then
 	    -- Create Holy Gem
         local hoge = {
             loc = {
@@ -3189,13 +3279,15 @@ function SMODS.INIT.flounderjokers()
             hoge.unlocked,
             hoge.discovered,
             hoge.blueprint_compat,
-            hoge.eternal_compat
+            hoge.eternal_compat,
+            nil,
+            hoge.slug
         )
         joker_hoge:register()
 
         -- Initialize Sprite for Jokers
         local sprite_hoge = SMODS.Sprite:new(
-            "j_" .. hoge.slug,
+            hoge.slug,
             flounderJokers.path,
             "j_" .. hoge.slug .. ".png",
             71,
@@ -3205,13 +3297,13 @@ function SMODS.INIT.flounderjokers()
         sprite_hoge:register()
 
         -- Set local variables for Holy Gem
-        function SMODS.Jokers.j_holyge.loc_def(self)
+        function joker_hoge.loc_def(self)
             return { self.ability.extra.money}
         end
 		-- Calculate
-        SMODS.Jokers.j_holyge.calculate = function(self, context)
+        joker_hoge.calculate = function(self, context)
 	       if self.ability.name ==  'holyGem' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Crowns") then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Crowns") then
                     G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.extra.money
 					G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
                     return {
@@ -3222,7 +3314,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-	if SMODS.INIT.CrownsSuit and config.goldBar then
+	if mod_loaded('CrownsSuit') and config.goldBar then
         -- Create Gold Bar
         local goba = {
             loc = {
@@ -3258,13 +3350,15 @@ function SMODS.INIT.flounderjokers()
             goba.unlocked,
             goba.discovered,
             goba.blueprint_compat,
-            goba.eternal_compat
+            goba.eternal_compat,
+            nil,
+            goba.slug
         )
         joker_goba:register()
 
         -- Initialize Sprite for Jokers
         local sprite_goba = SMODS.Sprite:new(
-            "j_" .. goba.slug,
+            goba.slug,
             flounderJokers.path,
             "j_" .. goba.slug .. ".png",
             71,
@@ -3274,13 +3368,13 @@ function SMODS.INIT.flounderjokers()
         sprite_goba:register()
 
         -- Set local variables for Gold Bar
-        function SMODS.Jokers.j_goldba.loc_def(self)
+        function joker_goba.loc_def(self)
             return { self.ability.extra.mult}
         end
 		-- Calculate
-        SMODS.Jokers.j_goldba.calculate = function(self, context)
+        joker_goba.calculate = function(self, context)
 	       if self.ability.name ==  'goldBar' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Crowns") then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Crowns") then
                     return {
                         mult = self.ability.extra.mult,
                         card = self
@@ -3289,7 +3383,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-	if SMODS.INIT.CrownsSuit and config.breadandButter then
+	if mod_loaded('CrownsSuit') and config.breadandButter then
         -- Create Bread and Butter
         local brbu = {
             loc = {
@@ -3324,13 +3418,15 @@ function SMODS.INIT.flounderjokers()
             brbu.unlocked,
             brbu.discovered,
             brbu.blueprint_compat,
-            brbu.eternal_compat
+            brbu.eternal_compat,
+            nil,
+            brbu.slug
         )
         joker_brbu:register()
 
         -- Initialize Sprite for Jokers
         local sprite_brbu = SMODS.Sprite:new(
-            "j_" .. brbu.slug,
+            brbu.slug,
             flounderJokers.path,
             "j_" .. brbu.slug .. ".png",
             71,
@@ -3340,13 +3436,13 @@ function SMODS.INIT.flounderjokers()
         sprite_brbu:register()
 
         -- Set local variables for Bread and Butter
-        function SMODS.Jokers.j_bread.loc_def(card)
+        function joker_brbu.loc_def(card)
             return { card.ability.extra.loop_amount}
         end
 		-- Calculate
-        SMODS.Jokers.j_bread.calculate = function(self, context)
+        joker_brbu.calculate = function(self, context)
 	        if context.repetition and context.cardarea == G.play then
-                if context.other_card:is_suit("Crowns") then
+                if context.other_card and context.other_card:is_suit("Crowns") then
                     return {
                         message = localize('k_again_ex'),
                         repetitions = 1,
@@ -3356,7 +3452,7 @@ function SMODS.INIT.flounderjokers()
 			end
 	    end
     end
-    if SMODS.INIT.CrownsSuit and config.kingsWrath then
+    if mod_loaded('CrownsSuit') and config.kingsWrath then
 	
 	    -- Create Kings Wrath
         local kiwr = {
@@ -3394,13 +3490,15 @@ function SMODS.INIT.flounderjokers()
             kiwr.unlocked,
             kiwr.discovered,
             kiwr.blueprint_compat,
-            kiwr.eternal_compat
+            kiwr.eternal_compat,
+            nil,
+            kiwr.slug
         )
         joker_kiwr:register()
 
         -- Initialize Sprite for Jokers
         local sprite_kiwr = SMODS.Sprite:new(
-            "j_" .. kiwr.slug,
+            kiwr.slug,
             flounderJokers.path,
             "j_" .. kiwr.slug .. ".png",
             71,
@@ -3410,16 +3508,17 @@ function SMODS.INIT.flounderjokers()
         sprite_kiwr:register()
 
         -- Set local variables for Kings Wrath
-        function SMODS.Jokers.j_kingsw.loc_def(self)
+        function joker_kiwr.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_kingsw.calculate = function(self, context)
+        joker_kiwr.calculate = function(self, context)
 	       if self.ability.name ==  'kingsWrath' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Crowns") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Crowns") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         for k, v in ipairs(context.full_hand) do
-                            if v:is_suit("Crowns") then 
+                            if v:is_suit("Crowns") then
                                 v:set_ability(G.P_CENTERS.m_gold, nil, true)
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
@@ -3438,7 +3537,7 @@ function SMODS.INIT.flounderjokers()
 ----- SixSuit collab !!!!! -------------------
 ----------------------------------------------
 
-    if SMODS.INIT.SixSuit and config.moonStone then
+    if mod_loaded('SixSuit') and config.moonStone then
 	
 	    -- Create Moon Stone
         local most = {
@@ -3475,13 +3574,15 @@ function SMODS.INIT.flounderjokers()
             most.unlocked,
             most.discovered,
             most.blueprint_compat,
-            most.eternal_compat
+            most.eternal_compat,
+            nil,
+            most.slug
         )
         joker_most:register()
 
         -- Initialize Sprite for Jokers
         local sprite_most = SMODS.Sprite:new(
-            "j_" .. most.slug,
+            most.slug,
             flounderJokers.path,
             "j_" .. most.slug .. ".png",
             71,
@@ -3491,14 +3592,15 @@ function SMODS.INIT.flounderjokers()
         sprite_most:register()
 
         -- Set local variables for Moon Stone
-        function SMODS.Jokers.j_moonst.loc_def(self)
+        function joker_most.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.Xmult}
         end
         -- Calculate
-        SMODS.Jokers.j_moonst.calculate = function(self, context)
+        joker_most.calculate = function(self, context)
 	       if self.ability.name ==  'moonStone' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then 
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Moons") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         return {
                             x_mult = self.ability.extra.Xmult,
                             card = self
@@ -3508,7 +3610,7 @@ function SMODS.INIT.flounderjokers()
 	        end
 		end
 	end
-    if SMODS.INIT.SixSuit and config.spaceLaser then
+    if mod_loaded('SixSuit') and config.spaceLaser then
         -- Create Space Laser
         local spla = {
             loc = {
@@ -3544,13 +3646,15 @@ function SMODS.INIT.flounderjokers()
             spla.unlocked,
             spla.discovered,
             spla.blueprint_compat,
-            spla.eternal_compat
+            spla.eternal_compat,
+            nil,
+            spla.slug
         )
         joker_spla:register()
 
         -- Initialize Sprite for Jokers
         local sprite_spla = SMODS.Sprite:new(
-            "j_" .. spla.slug,
+            spla.slug,
             flounderJokers.path,
             "j_" .. spla.slug .. ".png",
             71,
@@ -3560,13 +3664,13 @@ function SMODS.INIT.flounderjokers()
         sprite_spla:register()
 
         -- Set local variables for Space Laser
-        function SMODS.Jokers.j_spacel.loc_def(self)
+        function joker_spla.loc_def(self)
             return { self.ability.extra.chips}
         end
 		-- Calculate
-        SMODS.Jokers.j_spacel.calculate = function(self, context)
+        joker_spla.calculate = function(self, context)
 	       if self.ability.name ==  'spaceLaser' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then 
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Moons") then
                     return {
                         chips = self.ability.extra.chips,
                         card = self
@@ -3575,7 +3679,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-    if SMODS.INIT.SixSuit and config.apolloGem then
+    if mod_loaded('SixSuit') and config.apolloGem then
 	    -- Create Apollo Gem
         local apge = {
             loc = {
@@ -3611,13 +3715,15 @@ function SMODS.INIT.flounderjokers()
             apge.unlocked,
             apge.discovered,
             apge.blueprint_compat,
-            apge.eternal_compat
+            apge.eternal_compat,
+            nil,
+            apge.slug
         )
         joker_apge:register()
 
         -- Initialize Sprite for Jokers
         local sprite_apge = SMODS.Sprite:new(
-            "j_" .. apge.slug,
+            apge.slug,
             flounderJokers.path,
             "j_" .. apge.slug .. ".png",
             71,
@@ -3627,13 +3733,13 @@ function SMODS.INIT.flounderjokers()
         sprite_apge:register()
 
         -- Set local variables for Apollo Gem
-        function SMODS.Jokers.j_apollog.loc_def(self)
+        function joker_apge.loc_def(self)
             return { self.ability.extra.money}
         end
 		-- Calculate
-        SMODS.Jokers.j_apollog.calculate = function(self, context)
+        joker_apge.calculate = function(self, context)
 	       if self.ability.name ==  'apolloGem' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Moons") then
                     G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.extra.money
 					G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
                     return {
@@ -3644,7 +3750,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-    if SMODS.INIT.SixSuit and config.meteorPiece then
+    if mod_loaded('SixSuit') and config.meteorPiece then
         -- Create Meteor Piece
         local mepi = {
             loc = {
@@ -3680,13 +3786,15 @@ function SMODS.INIT.flounderjokers()
             mepi.unlocked,
             mepi.discovered,
             mepi.blueprint_compat,
-            mepi.eternal_compat
+            mepi.eternal_compat,
+            nil,
+            mepi.slug
         )
         joker_mepi:register()
 
         -- Initialize Sprite for Jokers
         local sprite_mepi = SMODS.Sprite:new(
-            "j_" .. mepi.slug,
+            mepi.slug,
             flounderJokers.path,
             "j_" .. mepi.slug .. ".png",
             71,
@@ -3696,13 +3804,13 @@ function SMODS.INIT.flounderjokers()
         sprite_mepi:register()
 
         -- Set local variables for Meteor Piece
-        function SMODS.Jokers.j_meteorpi.loc_def(self)
+        function joker_mepi.loc_def(self)
             return { self.ability.extra.mult}
         end
 		-- Calculate
-        SMODS.Jokers.j_meteorpi.calculate = function(self, context)
+        joker_mepi.calculate = function(self, context)
 	       if self.ability.name ==  'meteorPiece' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Moons") then
                     return {
                         mult = self.ability.extra.mult,
                         card = self
@@ -3711,7 +3819,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-    if SMODS.INIT.SixSuit and config.moonandSun then
+    if mod_loaded('SixSuit') and config.moonandSun then
         -- Create Moon and Sun
         local mosu = {
             loc = {
@@ -3746,13 +3854,15 @@ function SMODS.INIT.flounderjokers()
             mosu.unlocked,
             mosu.discovered,
             mosu.blueprint_compat,
-            mosu.eternal_compat
+            mosu.eternal_compat,
+            nil,
+            mosu.slug
         )
         joker_mosu:register()
 
         -- Initialize Sprite for Jokers
         local sprite_mosu = SMODS.Sprite:new(
-            "j_" .. mosu.slug,
+            mosu.slug,
             flounderJokers.path,
             "j_" .. mosu.slug .. ".png",
             71,
@@ -3762,13 +3872,13 @@ function SMODS.INIT.flounderjokers()
         sprite_mosu:register()
 
         -- Set local variables for Moon and Sun
-        function SMODS.Jokers.j_moonan.loc_def(card)
+        function joker_mosu.loc_def(card)
             return { card.ability.extra.loop_amount}
         end
 		-- Calculate
-        SMODS.Jokers.j_moonan.calculate = function(self, context)
+        joker_mosu.calculate = function(self, context)
 	        if context.repetition and context.cardarea == G.play then
-                if context.other_card:is_suit("Moons") then
+                if context.other_card and context.other_card:is_suit("Moons") then
                     return {
                         message = localize('k_again_ex'),
                         repetitions = 1,
@@ -3778,12 +3888,12 @@ function SMODS.INIT.flounderjokers()
 			end
 	    end
     end
-    if SMODS.INIT.SixSuit and config.mathMatician then
+    if mod_loaded('SixSuit') and config.mathMatician then
 	
 	    -- Create Mathmatician
         local mama = {
             loc = {
-                name = "Mathmatician",
+                name = "Mathematician",
                 text = {
                     "All {C:moons}Moon{} suit cards have",
 					"{C:green}#2# in #1#{} chance to",  
@@ -3816,13 +3926,15 @@ function SMODS.INIT.flounderjokers()
             mama.unlocked,
             mama.discovered,
             mama.blueprint_compat,
-            mama.eternal_compat
+            mama.eternal_compat,
+            nil,
+            mama.slug
         )
         joker_mama:register()
 
         -- Initialize Sprite for Jokers
         local sprite_mama = SMODS.Sprite:new(
-            "j_" .. mama.slug,
+            mama.slug,
             flounderJokers.path,
             "j_" .. mama.slug .. ".png",
             71,
@@ -3832,16 +3944,17 @@ function SMODS.INIT.flounderjokers()
         sprite_mama:register()
 
         -- Set local variables for Mathmatician
-        function SMODS.Jokers.j_mathma.loc_def(self)
+        function joker_mama.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_mathma.calculate = function(self, context)
+        joker_mama.calculate = function(self, context)
 	       if self.ability.name ==  'mathMatician' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Moons") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         for k, v in ipairs(context.full_hand) do
-                            if v:is_suit("Moons") then 
+                            if v:is_suit("Moons") then
                                 v:set_ability(G.P_CENTERS.m_mult, nil, true)
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
@@ -3856,7 +3969,7 @@ function SMODS.INIT.flounderjokers()
 	        end
         end
     end
-     if SMODS.INIT.SixSuit and config.sunStone then
+     if mod_loaded('SixSuit') and config.sunStone then
 	
 	    -- Create Sun Stone
         local sust = {
@@ -3893,13 +4006,15 @@ function SMODS.INIT.flounderjokers()
             sust.unlocked,
             sust.discovered,
             sust.blueprint_compat,
-            sust.eternal_compat
+            sust.eternal_compat,
+            nil,
+            sust.slug
         )
         joker_sust:register()
 
         -- Initialize Sprite for Jokers
         local sprite_sust = SMODS.Sprite:new(
-            "j_" .. sust.slug,
+            sust.slug,
             flounderJokers.path,
             "j_" .. sust.slug .. ".png",
             71,
@@ -3909,14 +4024,15 @@ function SMODS.INIT.flounderjokers()
         sprite_sust:register()
 
         -- Set local variables for Sun Stone
-        function SMODS.Jokers.j_sunst.loc_def(self)
+        function joker_sust.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1),self.ability.extra.Xmult}
         end
         -- Calculate
-        SMODS.Jokers.j_sunst.calculate = function(self, context)
+        joker_sust.calculate = function(self, context)
 	       if self.ability.name ==  'sunStone' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Stars") then 
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Stars") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         return {
                             x_mult = self.ability.extra.Xmult,
                             card = self
@@ -3926,7 +4042,7 @@ function SMODS.INIT.flounderjokers()
 	        end
 		end
 	end
-    if SMODS.INIT.SixSuit and config.solarFlare then
+    if mod_loaded('SixSuit') and config.solarFlare then
         -- Create Solar Flare
         local sofl = {
             loc = {
@@ -3962,13 +4078,15 @@ function SMODS.INIT.flounderjokers()
             sofl.unlocked,
             sofl.discovered,
             sofl.blueprint_compat,
-            sofl.eternal_compat
+            sofl.eternal_compat,
+            nil,
+            sofl.slug
         )
         joker_sofl:register()
 
         -- Initialize Sprite for Jokers
         local sprite_sofl = SMODS.Sprite:new(
-            "j_" .. sofl.slug,
+            sofl.slug,
             flounderJokers.path,
             "j_" .. sofl.slug .. ".png",
             71,
@@ -3978,13 +4096,13 @@ function SMODS.INIT.flounderjokers()
         sprite_sofl:register()
 
         -- Set local variables for Solar Flare
-        function SMODS.Jokers.j_solarf.loc_def(self)
+        function joker_sofl.loc_def(self)
             return { self.ability.extra.chips}
         end
 		-- Calculate
-        SMODS.Jokers.j_solarf.calculate = function(self, context)
+        joker_sofl.calculate = function(self, context)
 	       if self.ability.name ==  'solarFlare' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Stars") then 
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Stars") then
                     return {
                         chips = self.ability.extra.chips,
                         card = self
@@ -3993,7 +4111,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-    if SMODS.INIT.SixSuit and config.radiationGem then
+    if mod_loaded('SixSuit') and config.radiationGem then
 	    -- Create Radiation Gem
         local rage = {
             loc = {
@@ -4029,13 +4147,15 @@ function SMODS.INIT.flounderjokers()
             rage.unlocked,
             rage.discovered,
             rage.blueprint_compat,
-            rage.eternal_compat
+            rage.eternal_compat,
+            nil,
+            rage.slug
         )
         joker_rage:register()
 
         -- Initialize Sprite for Jokers
         local sprite_rage = SMODS.Sprite:new(
-            "j_" .. rage.slug,
+            rage.slug,
             flounderJokers.path,
             "j_" .. rage.slug .. ".png",
             71,
@@ -4045,13 +4165,13 @@ function SMODS.INIT.flounderjokers()
         sprite_rage:register()
 
         -- Set local variables for Radiation Gem
-        function SMODS.Jokers.j_radge.loc_def(self)
+        function joker_rage.loc_def(self)
             return { self.ability.extra.money}
         end
 		-- Calculate
-        SMODS.Jokers.j_radge.calculate = function(self, context)
+        joker_rage.calculate = function(self, context)
 	       if self.ability.name ==  'radiationGem' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Moons") then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Moons") then
                     G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.extra.money
 					G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
                     return {
@@ -4062,7 +4182,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-    if SMODS.INIT.SixSuit and config.starPlasma then
+    if mod_loaded('SixSuit') and config.starPlasma then
         -- Create Star Plasma
         local stpl = {
             loc = {
@@ -4098,13 +4218,15 @@ function SMODS.INIT.flounderjokers()
             stpl.unlocked,
             stpl.discovered,
             stpl.blueprint_compat,
-            stpl.eternal_compat
+            stpl.eternal_compat,
+            nil,
+            stpl.slug
         )
         joker_stpl:register()
 
         -- Initialize Sprite for Jokers
         local sprite_stpl = SMODS.Sprite:new(
-            "j_" .. stpl.slug,
+            stpl.slug,
             flounderJokers.path,
             "j_" .. stpl.slug .. ".png",
             71,
@@ -4114,13 +4236,13 @@ function SMODS.INIT.flounderjokers()
         sprite_stpl:register()
 
         -- Set local variables for Star Plasma
-        function SMODS.Jokers.j_starpl.loc_def(self)
+        function joker_stpl.loc_def(self)
             return { self.ability.extra.mult}
         end
 		-- Calculate
-        SMODS.Jokers.j_starpl.calculate = function(self, context)
+        joker_stpl.calculate = function(self, context)
 	       if self.ability.name ==  'starPlasma' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Stars") then
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Stars") then
                     return {
                         mult = self.ability.extra.mult,
                         card = self
@@ -4129,7 +4251,7 @@ function SMODS.INIT.flounderjokers()
 			end
 		end
 	end
-    if SMODS.INIT.SixSuit and config.sunandMoon then
+    if mod_loaded('SixSuit') and config.sunandMoon then
         -- Create Sun and Moon
         local sumo = {
             loc = {
@@ -4164,13 +4286,15 @@ function SMODS.INIT.flounderjokers()
             sumo.unlocked,
             sumo.discovered,
             sumo.blueprint_compat,
-            sumo.eternal_compat
+            sumo.eternal_compat,
+            nil,
+            sumo.slug
         )
         joker_sumo:register()
 
         -- Initialize Sprite for Jokers
         local sprite_sumo = SMODS.Sprite:new(
-            "j_" .. sumo.slug,
+            sumo.slug,
             flounderJokers.path,
             "j_" .. sumo.slug .. ".png",
             71,
@@ -4180,13 +4304,13 @@ function SMODS.INIT.flounderjokers()
         sprite_sumo:register()
 
         -- Set local variables for Sun and Moon
-        function SMODS.Jokers.j_sunan.loc_def(card)
+        function joker_sumo.loc_def(card)
             return { card.ability.extra.loop_amount}
         end
 		-- Calculate
-        SMODS.Jokers.j_sunan.calculate = function(self, context)
+        joker_sumo.calculate = function(self, context)
 	        if context.repetition and context.cardarea == G.play then
-                if context.other_card:is_suit("Stars") then
+                if context.other_card and context.other_card:is_suit("Stars") then
                     return {
                         message = localize('k_again_ex'),
                         repetitions = 1,
@@ -4196,7 +4320,7 @@ function SMODS.INIT.flounderjokers()
 			end
 	    end
     end
-    if SMODS.INIT.SixSuit and config.theBoss then
+    if mod_loaded('SixSuit') and config.theBoss then
 	
 	    -- Create The Boss
         local thbo = {
@@ -4234,13 +4358,15 @@ function SMODS.INIT.flounderjokers()
             thbo.unlocked,
             thbo.discovered,
             thbo.blueprint_compat,
-            thbo.eternal_compat
+            thbo.eternal_compat,
+            nil,
+            thbo.slug
         )
         joker_thbo:register()
 
         -- Initialize Sprite for Jokers
         local sprite_thbo = SMODS.Sprite:new(
-            "j_" .. thbo.slug,
+            thbo.slug,
             flounderJokers.path,
             "j_" .. thbo.slug .. ".png",
             71,
@@ -4250,16 +4376,17 @@ function SMODS.INIT.flounderjokers()
         sprite_thbo:register()
 
         -- Set local variables for The Boss
-        function SMODS.Jokers.j_thebo.loc_def(self)
+        function joker_thbo.loc_def(self)
             return { self.ability.extra.odds, '' .. (G.GAME and G.GAME.probabilities.normal or 1)}
         end
         -- Calculate
-        SMODS.Jokers.j_thebo.calculate = function(self, context)
+        joker_thbo.calculate = function(self, context)
 	       if self.ability.name ==  'theBoss' then
-		        if context.cardarea == G.play and not context.repetition and context.other_card:is_suit("Stars") then
-                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.extra.odds then				
+		        if context.cardarea == G.play and not context.repetition and context.other_card and context.other_card:is_suit("Stars") then
+                    if fj_roll(self) < G.GAME.probabilities.normal/self.ability.extra.odds then				
+                        if FJ_EFFECT then FJ_EFFECT(self) end
                         for k, v in ipairs(context.full_hand) do
-                            if v:is_suit("Stars") then 
+                            if v:is_suit("Stars") then
                                 v:set_ability(G.P_CENTERS.m_bonus, nil, true)
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
@@ -4276,25 +4403,5 @@ function SMODS.INIT.flounderjokers()
     end
 end
 	
-function Tag:init(_tag, for_collection, _blind_type)
-    self.key = _tag
-    local proto = G.P_TAGS[_tag] or G.tag_undiscovered
-    self.config = copy_table(proto.config)
-    self.pos = proto.pos
-    self.name = proto.name
-    self.tally = G.GAME.tag_tally or 0
-    self.triggered = false
-    G.tagid = G.tagid or 0
-    self.ID = G.tagid
-    G.tagid = G.tagid + 1
-    self.ability = {
-        orbital_hand = '['..localize('k_poker_hand')..']',
-        blind_type = _blind_type
-    }
-    G.GAME.tag_tally = G.GAME.tag_tally and (G.GAME.tag_tally + 1) or 1
-    if not for_collection then self:set_ability() end
-end
-
-
 ----------------------------------------------
 ------------MOD CODE END---------------------

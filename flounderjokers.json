@@ -1,0 +1,17 @@
+{
+  "id": "flounderjokers",
+  "name": "Flounder's Jokers: Definitive Edition",
+  "display_name": "Flounder's Jokers",
+  "author": ["Flounder"],
+  "description": "The creator-faithful definitive edition: 54 original Jokers, canonical Dice Seals, a balanced Dice suite, remastered art, compatibility fixes, and restrained presentation polish.",
+  "prefix": "fj",
+  "main_file": "main.lua",
+  "config_file": "config.lua",
+  "priority": 0,
+  "badge_colour": "B43254",
+  "badge_text_colour": "FFFFFF",
+  "version": "3.0.0",
+  "optional_features": { "object_weights": true },
+  "dependencies": ["Steamodded (>=1.0.0~BETA-1800)"],
+  "icon_path": "modicon.png"
+}

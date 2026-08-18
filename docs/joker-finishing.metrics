@@ -1,0 +1,552 @@
+{
+  "cards": 60,
+  "palette_ceiling": 48,
+  "average_colours_before": 225.0,
+  "average_colours_after": 48.0,
+  "average_noise_before": 32.452,
+  "average_noise_after": 8.649,
+  "noise_reduction_percent": 73.35,
+  "strong_edge_retention": 1.123,
+  "results": [
+    {
+      "card": "j_apollog.png",
+      "colours_before": 183,
+      "colours_after": 48,
+      "noise_before": 35.65,
+      "noise_after": 14.215,
+      "strong_edges_before": 2237,
+      "strong_edges_after": 2534
+    },
+    {
+      "card": "j_black.png",
+      "colours_before": 53,
+      "colours_after": 48,
+      "noise_before": 30.659,
+      "noise_after": 32.2726,
+      "strong_edges_before": 1935,
+      "strong_edges_after": 2442
+    },
+    {
+      "card": "j_blood.png",
+      "colours_before": 184,
+      "colours_after": 48,
+      "noise_before": 39.8154,
+      "noise_after": 17.7649,
+      "strong_edges_before": 1480,
+      "strong_edges_after": 1718
+    },
+    {
+      "card": "j_bornw.png",
+      "colours_before": 209,
+      "colours_after": 48,
+      "noise_before": 30.8766,
+      "noise_after": 13.5095,
+      "strong_edges_before": 3027,
+      "strong_edges_after": 3265
+    },
+    {
+      "card": "j_brass_cup.png",
+      "colours_before": 193,
+      "colours_after": 48,
+      "noise_before": 37.2261,
+      "noise_after": 10.0796,
+      "strong_edges_before": 1734,
+      "strong_edges_after": 2277
+    },
+    {
+      "card": "j_bread.png",
+      "colours_before": 197,
+      "colours_after": 48,
+      "noise_before": 26.7187,
+      "noise_after": 6.9724,
+      "strong_edges_before": 2537,
+      "strong_edges_after": 3134
+    },
+    {
+      "card": "j_bullet.png",
+      "colours_before": 251,
+      "colours_after": 48,
+      "noise_before": 30.4188,
+      "noise_after": 1.426,
+      "strong_edges_before": 2703,
+      "strong_edges_after": 3148
+    },
+    {
+      "card": "j_common.png",
+      "colours_before": 247,
+      "colours_after": 48,
+      "noise_before": 36.1078,
+      "noise_after": 1.2834,
+      "strong_edges_before": 2643,
+      "strong_edges_after": 3169
+    },
+    {
+      "card": "j_cracked.png",
+      "colours_before": 63,
+      "colours_after": 48,
+      "noise_before": 28.3999,
+      "noise_after": 23.634,
+      "strong_edges_before": 1550,
+      "strong_edges_after": 1701
+    },
+    {
+      "card": "j_croupier.png",
+      "colours_before": 235,
+      "colours_after": 48,
+      "noise_before": 36.0778,
+      "noise_after": 4.4056,
+      "strong_edges_before": 1839,
+      "strong_edges_after": 1975
+    },
+    {
+      "card": "j_crystalized.png",
+      "colours_before": 172,
+      "colours_after": 48,
+      "noise_before": 28.64,
+      "noise_after": 16.7442,
+      "strong_edges_before": 2230,
+      "strong_edges_after": 2296
+    },
+    {
+      "card": "j_crystalm.png",
+      "colours_before": 175,
+      "colours_after": 48,
+      "noise_before": 33.7136,
+      "noise_after": 14.2525,
+      "strong_edges_before": 2514,
+      "strong_edges_after": 2726
+    },
+    {
+      "card": "j_direc.png",
+      "colours_before": 192,
+      "colours_after": 48,
+      "noise_before": 33.5485,
+      "noise_after": 5.2086,
+      "strong_edges_before": 2382,
+      "strong_edges_after": 2339
+    },
+    {
+      "card": "j_double_down.png",
+      "colours_before": 258,
+      "colours_after": 48,
+      "noise_before": 34.1264,
+      "noise_after": 0.0901,
+      "strong_edges_before": 2393,
+      "strong_edges_after": 2753
+    },
+    {
+      "card": "j_enhanceds.png",
+      "colours_before": 217,
+      "colours_after": 48,
+      "noise_before": 32.1225,
+      "noise_after": 9.7118,
+      "strong_edges_before": 3251,
+      "strong_edges_after": 3677
+    },
+    {
+      "card": "j_fish.png",
+      "colours_before": 187,
+      "colours_after": 48,
+      "noise_before": 29.4356,
+      "noise_after": 12.3311,
+      "strong_edges_before": 2842,
+      "strong_edges_after": 3187
+    },
+    {
+      "card": "j_glassb.png",
+      "colours_before": 287,
+      "colours_after": 48,
+      "noise_before": 31.5671,
+      "noise_after": 2.184,
+      "strong_edges_before": 2762,
+      "strong_edges_after": 2931
+    },
+    {
+      "card": "j_goldba.png",
+      "colours_before": 213,
+      "colours_after": 48,
+      "noise_before": 34.4116,
+      "noise_after": 13.8922,
+      "strong_edges_before": 2251,
+      "strong_edges_after": 2705
+    },
+    {
+      "card": "j_guns.png",
+      "colours_before": 190,
+      "colours_after": 48,
+      "noise_before": 41.5866,
+      "noise_after": 19.266,
+      "strong_edges_before": 1456,
+      "strong_edges_after": 1877
+    },
+    {
+      "card": "j_holyge.png",
+      "colours_before": 150,
+      "colours_after": 48,
+      "noise_before": 30.2312,
+      "noise_after": 12.9916,
+      "strong_edges_before": 1960,
+      "strong_edges_after": 2640
+    },
+    {
+      "card": "j_house_edge.png",
+      "colours_before": 140,
+      "colours_after": 48,
+      "noise_before": 33.4509,
+      "noise_after": 21.0072,
+      "strong_edges_before": 974,
+      "strong_edges_after": 1146
+    },
+    {
+      "card": "j_hungryso.png",
+      "colours_before": 304,
+      "colours_after": 48,
+      "noise_before": 29.1054,
+      "noise_after": 0.2252,
+      "strong_edges_before": 3937,
+      "strong_edges_after": 3975
+    },
+    {
+      "card": "j_imperial.png",
+      "colours_before": 295,
+      "colours_after": 48,
+      "noise_before": 30.4413,
+      "noise_after": 2.4917,
+      "strong_edges_before": 2571,
+      "strong_edges_after": 2992
+    },
+    {
+      "card": "j_kingsw.png",
+      "colours_before": 223,
+      "colours_after": 48,
+      "noise_before": 30.674,
+      "noise_after": 10.0796,
+      "strong_edges_before": 2909,
+      "strong_edges_after": 3219
+    },
+    {
+      "card": "j_legendary.png",
+      "colours_before": 250,
+      "colours_after": 48,
+      "noise_before": 34.4416,
+      "noise_after": 2.6794,
+      "strong_edges_before": 2247,
+      "strong_edges_after": 2452
+    },
+    {
+      "card": "j_loaded_stone.png",
+      "colours_before": 196,
+      "colours_after": 48,
+      "noise_before": 34.9445,
+      "noise_after": 11.8283,
+      "strong_edges_before": 1995,
+      "strong_edges_after": 2079
+    },
+    {
+      "card": "j_lost.png",
+      "colours_before": 73,
+      "colours_after": 48,
+      "noise_before": 39.6127,
+      "noise_after": 30.0585,
+      "strong_edges_before": 2375,
+      "strong_edges_after": 2755
+    },
+    {
+      "card": "j_lovege.png",
+      "colours_before": 250,
+      "colours_after": 48,
+      "noise_before": 32.13,
+      "noise_after": 6.492,
+      "strong_edges_before": 3071,
+      "strong_edges_after": 3305
+    },
+    {
+      "card": "j_lucky.png",
+      "colours_before": 276,
+      "colours_after": 48,
+      "noise_before": 28.1597,
+      "noise_after": 0.5104,
+      "strong_edges_before": 2114,
+      "strong_edges_after": 2245
+    },
+    {
+      "card": "j_luxury.png",
+      "colours_before": 300,
+      "colours_after": 48,
+      "noise_before": 29.6758,
+      "noise_after": 1.5386,
+      "strong_edges_before": 1787,
+      "strong_edges_after": 1949
+    },
+    {
+      "card": "j_macaroni.png",
+      "colours_before": 267,
+      "colours_after": 48,
+      "noise_before": 27.9946,
+      "noise_after": 5.4338,
+      "strong_edges_before": 3119,
+      "strong_edges_after": 3450
+    },
+    {
+      "card": "j_mathma.png",
+      "colours_before": 198,
+      "colours_after": 48,
+      "noise_before": 36.0853,
+      "noise_after": 12.849,
+      "strong_edges_before": 2649,
+      "strong_edges_after": 2791
+    },
+    {
+      "card": "j_meteorpi.png",
+      "colours_before": 247,
+      "colours_after": 48,
+      "noise_before": 32.7079,
+      "noise_after": 3.2348,
+      "strong_edges_before": 2803,
+      "strong_edges_after": 3231
+    },
+    {
+      "card": "j_missile.png",
+      "colours_before": 318,
+      "colours_after": 48,
+      "noise_before": 34.7793,
+      "noise_after": 0.0,
+      "strong_edges_before": 1245,
+      "strong_edges_after": 1591
+    },
+    {
+      "card": "j_moonan.png",
+      "colours_before": 285,
+      "colours_after": 48,
+      "noise_before": 28.2873,
+      "noise_after": 0.0,
+      "strong_edges_before": 2909,
+      "strong_edges_after": 3182
+    },
+    {
+      "card": "j_moonst.png",
+      "colours_before": 185,
+      "colours_after": 48,
+      "noise_before": 29.3455,
+      "noise_after": 12.9691,
+      "strong_edges_before": 1993,
+      "strong_edges_after": 2313
+    },
+    {
+      "card": "j_mozambique.png",
+      "colours_before": 270,
+      "colours_after": 48,
+      "noise_before": 43.6431,
+      "noise_after": 3.2573,
+      "strong_edges_before": 1158,
+      "strong_edges_after": 1528
+    },
+    {
+      "card": "j_orb.png",
+      "colours_before": 150,
+      "colours_after": 48,
+      "noise_before": 23.4164,
+      "noise_after": 6.3795,
+      "strong_edges_before": 2015,
+      "strong_edges_after": 1895
+    },
+    {
+      "card": "j_overt.png",
+      "colours_before": 359,
+      "colours_after": 48,
+      "noise_before": 20.5569,
+      "noise_after": 0.0,
+      "strong_edges_before": 1771,
+      "strong_edges_after": 1855
+    },
+    {
+      "card": "j_paint.png",
+      "colours_before": 205,
+      "colours_after": 48,
+      "noise_before": 32.5278,
+      "noise_after": 4.3906,
+      "strong_edges_before": 1845,
+      "strong_edges_after": 2110
+    },
+    {
+      "card": "j_palmr.png",
+      "colours_before": 353,
+      "colours_after": 48,
+      "noise_before": 30.051,
+      "noise_after": 0.0,
+      "strong_edges_before": 2114,
+      "strong_edges_after": 2217
+    },
+    {
+      "card": "j_payout_gem.png",
+      "colours_before": 286,
+      "colours_after": 48,
+      "noise_before": 34.1264,
+      "noise_after": 0.0,
+      "strong_edges_before": 2485,
+      "strong_edges_after": 2554
+    },
+    {
+      "card": "j_pinkpa.png",
+      "colours_before": 143,
+      "colours_after": 48,
+      "noise_before": 34.0288,
+      "noise_after": 17.6524,
+      "strong_edges_before": 2533,
+      "strong_edges_after": 2659
+    },
+    {
+      "card": "j_radge.png",
+      "colours_before": 432,
+      "colours_after": 48,
+      "noise_before": 28.2723,
+      "noise_after": 0.0,
+      "strong_edges_before": 3077,
+      "strong_edges_after": 3479
+    },
+    {
+      "card": "j_rare.png",
+      "colours_before": 258,
+      "colours_after": 48,
+      "noise_before": 39.5302,
+      "noise_after": 1.426,
+      "strong_edges_before": 1860,
+      "strong_edges_after": 2010
+    },
+    {
+      "card": "j_rhythm.png",
+      "colours_before": 436,
+      "colours_after": 48,
+      "noise_before": 30.4338,
+      "noise_after": 0.0,
+      "strong_edges_before": 2084,
+      "strong_edges_after": 2350
+    },
+    {
+      "card": "j_robberh.png",
+      "colours_before": 48,
+      "colours_after": 48,
+      "noise_before": 32.0249,
+      "noise_after": 30.7265,
+      "strong_edges_before": 2417,
+      "strong_edges_after": 3122
+    },
+    {
+      "card": "j_salt.png",
+      "colours_before": 117,
+      "colours_after": 48,
+      "noise_before": 31.417,
+      "noise_after": 14.1324,
+      "strong_edges_before": 2837,
+      "strong_edges_after": 3079
+    },
+    {
+      "card": "j_shiny.png",
+      "colours_before": 211,
+      "colours_after": 48,
+      "noise_before": 31.7772,
+      "noise_after": 6.7622,
+      "strong_edges_before": 1936,
+      "strong_edges_after": 2217
+    },
+    {
+      "card": "j_solarf.png",
+      "colours_before": 208,
+      "colours_after": 48,
+      "noise_before": 30.8916,
+      "noise_after": 13.4269,
+      "strong_edges_before": 2844,
+      "strong_edges_after": 3111
+    },
+    {
+      "card": "j_spacel.png",
+      "colours_before": 171,
+      "colours_after": 48,
+      "noise_before": 37.4662,
+      "noise_after": 16.6091,
+      "strong_edges_before": 2412,
+      "strong_edges_after": 2627
+    },
+    {
+      "card": "j_spear.png",
+      "colours_before": 290,
+      "colours_after": 48,
+      "noise_before": 30.4788,
+      "noise_after": 0.4728,
+      "strong_edges_before": 3006,
+      "strong_edges_after": 3421
+    },
+    {
+      "card": "j_starpl.png",
+      "colours_before": 150,
+      "colours_after": 48,
+      "noise_before": 30.0961,
+      "noise_after": 18.5605,
+      "strong_edges_before": 3216,
+      "strong_edges_after": 3425
+    },
+    {
+      "card": "j_sunan.png",
+      "colours_before": 201,
+      "colours_after": 48,
+      "noise_before": 33.2558,
+      "noise_after": 9.269,
+      "strong_edges_before": 2596,
+      "strong_edges_after": 2878
+    },
+    {
+      "card": "j_sung.png",
+      "colours_before": 342,
+      "colours_after": 48,
+      "noise_before": 33.8112,
+      "noise_after": 0.0,
+      "strong_edges_before": 2051,
+      "strong_edges_after": 2488
+    },
+    {
+      "card": "j_sunken.png",
+      "colours_before": 313,
+      "colours_after": 48,
+      "noise_before": 40.2807,
+      "noise_after": 0.015,
+      "strong_edges_before": 2042,
+      "strong_edges_after": 2406
+    },
+    {
+      "card": "j_sunst.png",
+      "colours_before": 164,
+      "colours_after": 48,
+      "noise_before": 33.5335,
+      "noise_after": 16.4515,
+      "strong_edges_before": 1791,
+      "strong_edges_after": 1913
+    },
+    {
+      "card": "j_thebo.png",
+      "colours_before": 276,
+      "colours_after": 48,
+      "noise_before": 30.8241,
+      "noise_after": 0.2101,
+      "strong_edges_before": 2766,
+      "strong_edges_after": 3063
+    },
+    {
+      "card": "j_uncommon.png",
+      "colours_before": 265,
+      "colours_after": 48,
+      "noise_before": 35.0195,
+      "noise_after": 0.0,
+      "strong_edges_before": 2279,
+      "strong_edges_after": 2715
+    },
+    {
+      "card": "j_witchdo.png",
+      "colours_before": 189,
+      "colours_after": 48,
+      "noise_before": 26.4935,
+      "noise_after": 5.5839,
+      "strong_edges_before": 1979,
+      "strong_edges_after": 2365
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "frames_per_asset": 6,
+  "results": [
+    {
+      "asset": "b_loaded.png",
+      "source_crop_2x": [
+        55,
+        49,
+        128,
+        154
+      ],
+      "occupancy_min": 0.7254,
+      "occupancy_max": 0.7254
+    },
+    {
+      "asset": "b_workshop.png",
+      "source_crop_2x": [
+        41,
+        49,
+        113,
+        155
+      ],
+      "occupancy_min": 0.7173,
+      "occupancy_max": 0.7179
+    },
+    {
+      "asset": "b_curator.png",
+      "source_crop_2x": [
+        26,
+        39,
+        98,
+        155
+      ],
+      "occupancy_min": 0.5703,
+      "occupancy_max": 0.5735
+    },
+    {
+      "asset": "v_wax_stamp.png",
+      "source_crop_2x": [
+        35,
+        31,
+        134,
+        117
+      ],
+      "occupancy_min": 0.3629,
+      "occupancy_max": 0.3638
+    },
+    {
+      "asset": "v_sealing_press.png",
+      "source_crop_2x": [
+        36,
+        25,
+        118,
+        126
+      ],
+      "occupancy_min": 0.4276,
+      "occupancy_max": 0.432
+    },
+    {
+      "asset": "v_display_case.png",
+      "source_crop_2x": [
+        18,
+        25,
+        98,
+        132
+      ],
+      "occupancy_min": 0.5923,
+      "occupancy_max": 0.5926
+    },
+    {
+      "asset": "v_private_collection.png",
+      "source_crop_2x": [
+        9,
+        25,
+        91,
+        130
+      ],
+      "occupancy_min": 0.6,
+      "occupancy_max": 0.6007
+    },
+    {
+      "asset": "bl_quarry.png",
+      "source_crop_2x": [
+        17,
+        5,
+        65,
+        55
+      ],
+      "occupancy_min": 0.487,
+      "occupancy_max": 0.5026
+    },
+    {
+      "asset": "bl_lock.png",
+      "source_crop_2x": [
+        17,
+        6,
+        54,
+        55
+      ],
+      "occupancy_min": 0.3356,
+      "occupancy_max": 0.3521
+    },
+    {
+      "asset": "bl_house.png",
+      "source_crop_2x": [
+        7,
+        8,
+        54,
+        54
+      ],
+      "occupancy_min": 0.4853,
+      "occupancy_max": 0.4905
+    },
+    {
+      "asset": "bl_mirror.png",
+      "source_crop_2x": [
+        5,
+        8,
+        49,
+        55
+      ],
+      "occupancy_min": 0.3443,
+      "occupancy_max": 0.3599
+    }
+  ]
+}
